@@ -239,7 +239,21 @@
     <addaction name="actionPrevious"/>
     <addaction name="actionNext"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <widget class="QMenu" name="menuImport">
+     <property name="title">
+      <string>Import</string>
+     </property>
+     <addaction name="actionImportFromFile"/>
+     <addaction name="actionImport_from_web"/>
+    </widget>
+    <addaction name="menuImport"/>
+   </widget>
    <addaction name="menuUrania"/>
+   <addaction name="menuTools"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -263,6 +277,9 @@
    <property name="text">
     <string>Previous</string>
    </property>
+   <property name="toolTip">
+    <string>Previous ( ALT + Left )</string>
+   </property>
   </action>
   <action name="actionNext">
    <property name="icon">
@@ -272,10 +289,32 @@
    <property name="text">
     <string>Next</string>
    </property>
+   <property name="toolTip">
+    <string>Next  ( ALT + Right )</string>
+   </property>
+  </action>
+  <action name="actionImportFromFile">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/file-import-outline.svg</normaloff>:/images/file-import-outline.svg</iconset>
+   </property>
+   <property name="text">
+    <string>From file...</string>
+   </property>
+  </action>
+  <action name="actionImport_from_web">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/import.svg</normaloff>:/images/import.svg</iconset>
+   </property>
+   <property name="text">
+    <string>From web...</string>
+   </property>
   </action>
  </widget>
  <resources>
   <include location="../res/qdarkstyle/qdarkstyle.qrc"/>
+  <include location="../res/img/img.qrc"/>
  </resources>
  <connections/>
 </ui>

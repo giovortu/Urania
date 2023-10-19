@@ -4,6 +4,7 @@
 
 #include <QMainWindow>
 #include <QKeyEvent>
+#include <QNetworkAccessManager>
 
 #include "Book.h"
 class Library;
@@ -38,10 +39,15 @@ public slots:
 
     void onRatingChanged(qreal rating);
 
+    void onImportFromFile( );
+    void onImportFromWeb( );
+
 
 
 private:
     int m_currentBook = 1;
+
+    QNetworkAccessManager m_manager;
 
     QLineEdit *m_current;
 

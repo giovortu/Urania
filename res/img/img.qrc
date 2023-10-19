@@ -4,5 +4,8 @@
     <file>star-filled.svg</file>
     <file>star-empty.svg</file>
     <file>star-half.svg</file>
+    <file>import.svg</file>
+    <file>file-import-outline.svg</file>
+
   </qresource>
 </RCC>

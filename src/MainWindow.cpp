@@ -5,6 +5,10 @@
 #include "ui_MainWindow.h"
 #include "Library.h"
 #include <QLineEdit>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include "StarRating.h"
 
 
@@ -42,13 +46,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     lay->addWidget(m_starRating,5,1);
 
-    QShortcut *leftShortcut = new QShortcut(Qt::Key_Left, this);
-    QShortcut *rightShortcut = new QShortcut(Qt::Key_Right, this);
+    QShortcut *leftShortcut = new QShortcut(Qt::ALT +Qt::Key_Left, this);
+    QShortcut *rightShortcut = new QShortcut(Qt::ALT +Qt::Key_Right, this);
 
     // Connect slots to the activated signals of the shortcuts
     connect(leftShortcut, &QShortcut::activated, this, &MainWindow::onPrevious);
     connect(rightShortcut, &QShortcut::activated, this, &MainWindow::onNext);
 
+    connect( ui->actionImportFromFile, &QAction::triggered, this, &MainWindow::onImportFromFile );
+    connect( ui->actionImport_from_web, &QAction::triggered, this, &MainWindow::onImportFromWeb );
 
 
     Book book;
@@ -58,7 +64,6 @@ MainWindow::MainWindow(QWidget *parent)
     m_library->getBook( 1, book );
 
     viewBook( book );
-
 
 
 
@@ -179,6 +184,54 @@ void MainWindow::onRatingChanged(qreal rating)
     m_library->getBook( m_currentBook, book );
     book.owned = ui->owned->isChecked();
     m_library->updateBookStars( book.number, (int)( roundToHalf( rating ) * 10 ));
+}
+
+void MainWindow::onImportFromFile()
+{
+    QString file = QFileDialog::getOpenFileName( this, "Load from HTML", "", "HTML files (*.htm)" );
+
+    qDebug() << file ;
+ }
+
+void MainWindow::onImportFromWeb()
+{
+
+    QString remote = QInputDialog::getText( this, "Import from web", "Enter the URL of the web page to import from" );
+
+
+
+        // Specify the URL of the web page you want to download
+        QUrl url(remote); // Replace with the URL of the web page you want to download
+
+        // Send an HTTP GET request to the URL
+        m_manager.get(QNetworkRequest(url));
+
+        // Connect a slot to handle the reply when it is ready
+        QObject::connect(&m_manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+        {
+
+            if (reply->error() == QNetworkReply::NoError)
+            {
+                QByteArray htmlData = reply->readAll();
+                QString html = QString::fromUtf8(htmlData);
+                qDebug() << "HTML content:" << html;
+                /*
+                Book book;
+                book.fromHTML( html );)
+                m_library->addBook( book );
+                */
+            }
+            else
+            {
+                qDebug() << "Error downloading the web page:" << reply->errorString();
+            }
+
+
+        });
+
+
+
+
 }
 
 
