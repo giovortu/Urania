@@ -1,0 +1,70 @@
+<RCC>
+    <qresource prefix="/images/">
+        <file>content-save-outline.svg</file>
+        <file>content-save-settings-outline.svg</file>
+        <file>folder-open-outline.svg</file>
+        <file>text-box-plus-outline.svg</file>
+        <file>exit-to-app.svg</file>
+        <file>algorithm.svg</file>
+        <file>close-box-outline.svg</file>
+        <file>serial-port.svg</file>
+        <file>icons8-outgoing-data-100.svg</file>
+        <file>icons8-disconnected-100.svg</file>
+        <file>cog-outline.svg</file>
+        <file>record-rec.svg</file>
+        <file>eye-plus.svg</file>
+        <file>lan-connect.svg</file>
+        <file>lan-disconnect.svg</file>
+        <file>save-workspace.svg</file>
+        <file>save-workspace-as.svg</file>
+        <file>open-workspace.svg</file>
+        <file>close-workspace.svg</file>
+        <file>delete-outline.svg</file>
+        <file>pause-circle-outline.svg</file>
+        <file>window-maximize.svg</file>
+        <file>telescope.svg</file>
+        <file>window-minimize.svg</file>
+        <file>window-close.svg</file>
+        <file>magnify-minus-outline.svg</file>
+        <file>magnify-plus-outline.svg</file>
+        <file>new-box.svg</file>
+        <file>folder-plus-outline.svg</file>
+        <file>file-send-outline.svg</file>
+        <file>stop-circle-outline.svg</file>
+        <file>sine-wave.svg</file>
+        <file>vector-curve.svg</file>
+        <file>record-circle-outline.svg</file>
+        <file>spinner.svg</file>
+        <file>pause.svg</file>
+        <file>spinner2.svg</file>
+        <file>check-outline.svg</file>
+        <file>play-outline.svg</file>
+        <file>check.svg</file>
+        <file>database-edit.svg</file>
+        <file>add-document.svg</file>
+        <file>cancel.svg</file>
+        <file>minus.svg</file>
+        <file>plus.svg</file>
+        <file>content-copy.svg</file>
+        <file>chart-bell-curve.svg</file>
+        <file>chart-bell-curve-delete.svg</file>
+        <file>chart-scatter-plot.svg</file>
+        <file>form-select.svg</file>
+        <file>playlist-check.svg</file>
+        <file>playlist-edit.svg</file>
+        <file>ethernet.svg</file>
+        <file>account.svg</file>
+        <file>account-off.svg</file>
+        <file>serial-port-disconnect.svg</file>
+
+        <file>cloud-download.svg</file>
+        <file>cloud-upload.svg</file>
+        <file>loading.svg</file>
+        <file>tab-plus.svg</file>
+        <file>tab-remove.svg</file>
+        <file>logo.jpg</file>
+
+
+
+    </qresource>
+</RCC>
