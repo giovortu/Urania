@@ -12,15 +12,15 @@ SearchResultDialog::SearchResultDialog(QWidget *parent) :
 
     m_table = new QTableWidget( this );
     ui->mainLayout->addWidget( m_table );
-    m_table->setColumnCount(6);
-    QStringList headers = {"Number", "Title (ITA)", "Title (Original)", "Author", "Date Published", "Cover Author"};
+    m_table->setColumnCount(8);
+    QStringList headers = {"Number", "Title (ITA)", "Title (Original)", "Author", "Date Published", "Cover Author", "Owned", "Read"};
     m_table->setHorizontalHeaderLabels(headers);
 
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 
     setAttribute(Qt::WA_DeleteOnClose);
-    setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::Window );//| Qt::WindowStaysOnTopHint);
 
     connect( ui->buttonBox, &QDialogButtonBox::rejected, this, &SearchResultDialog::close );
 
@@ -79,6 +79,17 @@ void SearchResultDialog::setResults(QList<Book> &books)
             item = new QTableWidgetItem(book.cover_author);
             item->setFlags(item->flags() & ~Qt::ItemIsEditable);
             m_table->setItem(row, 5, item);
+
+            //Owned
+            item = new QTableWidgetItem(book.owned?"Yes":"No");
+            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+            m_table->setItem(row, 6, item);
+
+            //Read
+            item = new QTableWidgetItem(book.read?"Yes":"No");
+            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+            m_table->setItem(row, 7, item);
+
 
 
         }
