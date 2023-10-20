@@ -32,10 +32,15 @@ class Book
 {
 
 public:
+    friend QDebug operator<<(QDebug ds, const Book &book);
+    friend QTextStream &operator<<(QTextStream &ds, const Book &book);
+
     explicit Book();
 
     bool fromJson( const QJsonObject& obj );
-    QJsonObject toJson();
+    QJsonObject toJson() ;
+
+    QString toString();
 
     bool isValid();
 
@@ -60,6 +65,13 @@ public:
     int stars;
 
     QString comment;
+    bool reprint;
+    bool read;
+
+    //support
+    QString cover_image_path;
+
+
 
 
 };

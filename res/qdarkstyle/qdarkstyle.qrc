@@ -209,6 +209,14 @@
     <file>rc/window_undock_focus@2x.png</file>
     <file>rc/window_undock_pressed.png</file>
     <file>rc/window_undock_pressed@2x.png</file>
+    
+    <file>rc/arrow_rewind.png</file>
+    <file>rc/arrow_ff.png</file>
+    <file>rc/arrow_first.png</file>
+    <file>rc/arrow_last.png</file>
+    <file>rc/search.png</file>
+    <file>rc/statistics.png</file>
+    <file>rc/new.png</file>
   </qresource>
   <qresource prefix="qdarkstyle">
       <file>style.css</file>

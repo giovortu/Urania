@@ -5,6 +5,8 @@
 #include <QFile>
 #include <QDebug>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QDomDocument>
 
 #include "tidy.h"
 #include "tidybuffio.h"
@@ -14,7 +16,7 @@
 #include <fstream>
 #include <string>
 
-#include <QDomDocument>
+
 
 bool isNodeEmpty(const QDomNode& node) {
     if (node.isText()) {
@@ -120,6 +122,8 @@ Book::Book()
     owned = false;
     stars = 0;
     comment = "";
+    reprint = false;
+    read = false;
 }
 
 bool Book::fromJson(const QJsonObject &obj)
@@ -138,6 +142,10 @@ bool Book::fromJson(const QJsonObject &obj)
     number = obj["number"].toInt();
     stars = obj["stars"].toInt();
     comment = obj["comment"].toString();
+    reprint = obj["reprint"].toBool();
+    read = obj["read"].toBool();
+
+
 
     QJsonArray indexArray = obj["index"].toArray();
     for (int i = 0; i < indexArray.size(); ++i) {
@@ -166,6 +174,8 @@ QJsonObject Book::toJson()
     obj["number"] = number;
     obj["stars"] = stars;
     obj["comment"] = comment;
+    obj["reprint"] = reprint;
+    obj["read"] = read;
 
 
     QJsonArray indexArray;
@@ -176,6 +186,14 @@ QJsonObject Book::toJson()
     obj["index"] = indexArray;
 
     return obj;
+
+}
+
+QString Book::toString()
+{
+    QJsonObject obj = this->toJson();
+    QJsonDocument doc(obj);
+    return doc.toJson();
 
 }
 
@@ -316,6 +334,9 @@ bool Book::fromHTML(const QString &path)
                             qWarning() << "Cover:" << image_path;
 
                             QFile img( image_path );
+
+                            cover_image_path = image_path;
+
                             if ( img.open( QIODevice::ReadOnly) )
                             {
                                 cover_image = img.readAll();
@@ -323,6 +344,7 @@ bool Book::fromHTML(const QString &path)
                             }
                             else
                             {
+
                                 qWarning() << "Image does not exist" << image_path;
                             }
 
@@ -451,5 +473,16 @@ bool Book::fromHTML(const QString &path)
     return true;
 }
 
+auto operator<<(QDebug ds, const Book &book) -> QDebug
+{
+    ds.nospace() << const_cast<Book&>(  book ).toString();
 
+    return ds.space();
+}
+
+auto operator<<(QTextStream &ds, const Book &book) -> QTextStream &
+{
+    ds << const_cast<Book&>(  book ).toString();
+    return ds;
+}
 

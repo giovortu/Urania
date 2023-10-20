@@ -14,8 +14,17 @@ class Library : public QObject
 public:
     explicit Library(QObject *parent = nullptr);
 
+
+    QString searchBooks( const QString &text, int type, QList<Book> &books );
     bool getBook(int number, Book &book);
+
     int getBookCount();
+    int getOwnedCount();
+    int getReadCount();
+
+    QList<Book> getOwnedBooks();
+    QList<Book> getReadBooks();
+
 
 signals:
 
@@ -25,6 +34,7 @@ public slots:
 
     bool addBook( const Book &book );
     bool updateBookOwned( int number, bool owned );
+    bool updateBookRead(int number, bool read);
     bool updateBookComment( int number, const QString &comment );
     bool updateBookStars( int number, int stars );
 

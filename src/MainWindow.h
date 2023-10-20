@@ -9,8 +9,9 @@
 #include "Book.h"
 class Library;
 class QLineEdit;
-
+class QComboBox;
 class StarRating;
+class QSettings;
 
 
 QT_BEGIN_NAMESPACE
@@ -33,16 +34,40 @@ public slots:
     void onNext(  );
     void onPrevious(  );
 
+    void toggleOwned();
+    void toggleRead();
+
+    void onNextTen();
+    void onPreviuosTen();
+
+    void goFirst();
+    void goLast();
+
     void onCurrentChanged();
 
     void onOwnedChanged( bool );
+
+    void onReadChanged( bool );
 
     void onRatingChanged(qreal rating);
 
     void onImportFromFile( );
     void onImportFromWeb( );
 
+    void loadBook( int index );
 
+    void onSearch();
+
+    void onStatistics();
+
+    void onNewBook();
+
+    void readSettings();
+
+    void writeSettings();
+
+protected:
+    virtual void closeEvent(QCloseEvent *event) override;
 
 private:
     int m_currentBook = 1;
@@ -50,12 +75,18 @@ private:
     QNetworkAccessManager m_manager;
 
     QLineEdit *m_current;
+    QLineEdit *m_search;
 
+    QComboBox *m_searchType;
     Library *m_library;
 
     StarRating *m_starRating;
 
     Ui::MainWindow *ui;
+
+    QSettings *m_settings;
+
+    bool m_safeExit = false;
 };
 
 #endif // MAINWINDOW_H

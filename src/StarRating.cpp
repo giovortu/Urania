@@ -15,7 +15,6 @@ void StarRating::setRating(qreal newRating)
     {
         rating = qBound(0.0, newRating, 5.0); // Ensure rating is between 0 and 5
         update(); // Redraw the widget
-        emit ratingChanged(rating);
     }
 }
 
@@ -59,5 +58,6 @@ void StarRating::mousePressEvent(QMouseEvent *event)
     {
         qreal newRating = static_cast<qreal>(event->x()) / 20.0;
         setRating(newRating);
+        emit ratingChanged(rating);
     }
 }

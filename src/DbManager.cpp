@@ -37,7 +37,9 @@ bool DbManager::createTables()
                   synopsis_image BLOB, \
                   owned BOOL, \
                   stars INTEGER, \
-                  comment TEXT);");
+                  comment TEXT, \
+                  reprint BOOL, \
+                  read BOOL );");
 
     if(query.exec())
     {
@@ -105,6 +107,26 @@ bool DbManager::addBook(const Book &book)
                  << query.lastError();
     }
 
+    query.prepare("UPDATE books as b \
+                    SET reprint = 1 \
+                    WHERE EXISTS ( \
+                      SELECT * \
+                      FROM books AS a \
+                      WHERE a.number < b.number \
+                      AND a.title_ita = b.title_ita \
+                      AND a.author = b.author \
+                    );");
+    if(query.exec())
+    {
+       qWarning() << "Updated reprints";
+    }
+    else
+    {
+        qDebug() << "updatereprint error:"
+                 << query.lastError();
+    }
+
+
 
 
 
@@ -129,6 +151,29 @@ bool DbManager::updateBookOwned(int number, bool owned)
     else
     {
         qDebug() << "update owned:"
+                 << query.lastError();
+    }
+    return success;
+}
+
+bool DbManager::updateBookRead(int number, bool read)
+{
+    bool success = false;
+
+    QSqlQuery query;
+    query.prepare("UPDATE books SET read = :read WHERE number = :number");
+
+
+    query.bindValue(":number", number);
+    query.bindValue(":read", read);
+
+    if(query.exec())
+    {
+       success = true;
+    }
+    else
+    {
+        qDebug() << "update read:"
                  << query.lastError();
     }
     return success;
@@ -203,6 +248,42 @@ bool DbManager::addIndex(int number, const Index &index)
     return success;
 }
 
+QString DbManager::typeToField(int type)
+{
+
+    QString retVal = "title_ita";
+
+    switch( type )
+    {
+        case 0:
+            retVal = "title_ita";
+        break;
+
+        case 1:
+            retVal = "title_orig";
+        break;
+
+        case 2:
+            retVal = "author";
+        break;
+
+        case 3:
+            retVal = "date_pub";
+        break;
+
+        case 4:
+            retVal = "cover_author";
+        break;
+
+        default: break;
+
+
+    }
+
+
+    return retVal;
+}
+
 bool DbManager::getBook(int number, Book &book)
 {
     bool success = false;
@@ -216,20 +297,7 @@ bool DbManager::getBook(int number, Book &book)
 
         while (query.next())
         {
-
-            book.number =            query.value( query.record().indexOf("number") ).toInt();
-            book.title_ita =         query.value( query.record().indexOf("title_ita") ).toString();
-            book.title_orig =        query.value( query.record().indexOf("title_orig") ).toString();
-            book.author =            query.value( query.record().indexOf("author") ).toString();
-            QString date = query.value( query.record().indexOf("date_pub") ).toString();
-            book.date_pub =          QDate::fromString( date, "yyyy-MM-dd" );
-            book.cover_author =      query.value( query.record().indexOf("cover_author") ).toString();
-            book.cover_image =       query.value( query.record().indexOf("cover_image") ).toByteArray();
-            book.synopsis =          query.value( query.record().indexOf("synopsis") ).toString();
-            book.synopsis_image =    query.value( query.record().indexOf("synopsis_image") ).toByteArray();
-            book.owned =             query.value( query.record().indexOf("owned") ).toBool();
-            book.stars =             query.value( query.record().indexOf("stars") ).toInt();
-            book.comment =           query.value( query.record().indexOf("comment") ).toString();
+            book= bookFromQuery( query );
 
             success = true;
         }
@@ -279,5 +347,127 @@ int DbManager::getBookCount()
         }
     }
     return m_currentBookCount;
+}
+
+int DbManager::getOwnedCount()
+{
+
+    QSqlQuery query;
+    query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true");
+    if(query.exec())
+    {
+        if(query.next())
+        {
+            return  query.value( 0 ).toInt();
+        }
+    }
+
+    return 0;
+}
+
+int DbManager::getReadCount()
+{
+    QSqlQuery query;
+    query.prepare("SELECT count(number) as num_books FROM books WHERE read = true");
+    if(query.exec())
+    {
+        if(query.next())
+        {
+            return  query.value( 0 ).toInt();
+        }
+    }
+
+    return 0;
+}
+
+QList<Book> DbManager::getOwnedBooks()
+{
+    QList<Book> books;
+    QSqlQuery query;
+    query.prepare("SELECT * FROM books WHERE owned = true");
+    if(query.exec())
+    {
+        if(query.next())
+        {
+            while (query.next())
+            {
+                Book book = bookFromQuery( query );
+
+                books.append( book );
+            }
+        }
+    }
+
+    return books;
+}
+
+QList<Book> DbManager::getReadBooks()
+{
+    QList<Book> books;
+    QSqlQuery query;
+    query.prepare("SELECT * FROM books WHERE read = true");
+    if(query.exec())
+    {
+        if(query.next())
+        {
+            while (query.next())
+            {
+                Book book = bookFromQuery( query );
+
+                books.append( book );
+            }
+        }
+    }
+
+    return books;
+}
+
+Book DbManager::bookFromQuery( QSqlQuery &query )
+{
+    Book book;
+    book.number =            query.value( query.record().indexOf("number") ).toInt();
+    book.title_ita =         query.value( query.record().indexOf("title_ita") ).toString();
+    book.title_orig =        query.value( query.record().indexOf("title_orig") ).toString();
+    book.author =            query.value( query.record().indexOf("author") ).toString();
+    QString date = query.value( query.record().indexOf("date_pub") ).toString();
+    book.date_pub =          QDate::fromString( date, "yyyy-MM-dd" );
+    book.cover_author =      query.value( query.record().indexOf("cover_author") ).toString();
+    book.cover_image =       query.value( query.record().indexOf("cover_image") ).toByteArray();
+    book.synopsis =          query.value( query.record().indexOf("synopsis") ).toString();
+    book.synopsis_image =    query.value( query.record().indexOf("synopsis_image") ).toByteArray();
+    book.owned =             query.value( query.record().indexOf("owned") ).toBool();
+    book.stars =             query.value( query.record().indexOf("stars") ).toInt();
+    book.comment =           query.value( query.record().indexOf("comment") ).toString();
+    book.reprint =           query.value( query.record().indexOf("reprint") ).toBool();
+    book.read =              query.value( query.record().indexOf("read") ).toBool();
+
+    return book;
+}
+
+QString DbManager::searchBooks(const QString &text, int type, QList<Book> &books)
+{
+    QString field = typeToField( type );
+
+
+    QString stQuery = QString("SELECT number FROM books WHERE %1 LIKE '%%2%';").arg( field, text );
+    QSqlQuery query;
+    query.prepare( stQuery );
+
+    if(query.exec())
+    {
+        books.clear();
+        while (query.next())
+        {
+            int number = query.value( 0 ).toInt();
+
+            Book book;
+            if ( getBook(number, book ) )
+            {
+                books.append( book );
+            }
+        }
+    }
+
+    return field;
 }
 
