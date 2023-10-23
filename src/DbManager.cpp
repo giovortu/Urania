@@ -76,8 +76,8 @@ bool DbManager::addBook(const Book &book)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -91,6 +91,7 @@ bool DbManager::addBook(const Book &book)
     query.bindValue(":owned", book.owned);
     query.bindValue(":stars", book.stars);
     query.bindValue(":comment", book.comment);
+    query.bindValue(":read", book.read);
 
     if(query.exec())
     {
