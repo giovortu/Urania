@@ -138,10 +138,10 @@ bool DbManager::updateBookOwned(int number, bool owned)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET owned = :owned WHERE number = :number");
+    query.prepare("UPDATE books SET owned = :owned WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
 
 
-    query.bindValue(":number", number);
+    query.bindValue(":number", number - 1);
     query.bindValue(":owned", owned);
 
     if(query.exec())
@@ -161,10 +161,10 @@ bool DbManager::updateBookRead(int number, bool read)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET read = :read WHERE number = :number");
+    query.prepare("UPDATE books SET read = :read WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
 
 
-    query.bindValue(":number", number);
+    query.bindValue(":number", number - 1);
     query.bindValue(":read", read);
 
     if(query.exec())
@@ -184,10 +184,10 @@ bool DbManager::updateBookComment(int number, const QString &comment)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET comment = :comment WHERE number = :number");
+    query.prepare("UPDATE books SET comment = :comment WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
 
 
-    query.bindValue(":number", number);
+    query.bindValue(":number", number - 1);
     query.bindValue(":comment", comment);
 
     if(query.exec())
@@ -207,10 +207,10 @@ bool DbManager::updateBookStars(int number, int stars)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET stars = :stars WHERE number = :number");
+    query.prepare("UPDATE books SET stars = :stars WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
 
 
-    query.bindValue(":number", number);
+    query.bindValue(":number", number - 1);
     query.bindValue(":stars", stars);
 
     if(query.exec())
@@ -233,7 +233,7 @@ bool DbManager::addIndex(int number, const Index &index)
     query.prepare("INSERT OR REPLACE INTO indexes (number,title, author) "
                   "VALUES    (:number,:title,:author)");
 
-    query.bindValue(":number", number);
+    query.bindValue(":number", number - 1);
     query.bindValue(":title", index.title);
     query.bindValue(":author", index.author);
     if(query.exec())
@@ -303,7 +303,7 @@ bool DbManager::getBook(int number, Book &book)
         }
 
         query.prepare("SELECT * FROM indexes WHERE number = (:number)");
-        query.bindValue(":number", number);
+        query.bindValue(":number", book.number);
         if(query.exec())
         {
             while (query.next())
@@ -446,22 +446,24 @@ QString DbManager::searchBooks(const QString &text, int type, QList<Book> &books
 {
     QString field = typeToField( type );
 
-
-    QString stQuery = QString("SELECT number FROM books WHERE %1 LIKE '%%2%';").arg( field, text );
-    QSqlQuery query;
-    query.prepare( stQuery );
-
-    if(query.exec())
+    if (!text.isEmpty())
     {
-        books.clear();
-        while (query.next())
-        {
-            int number = query.value( 0 ).toInt();
+        QString stQuery = QString("SELECT number FROM books WHERE %1 LIKE '%%2%';").arg( field, text );
+        QSqlQuery query;
+        query.prepare( stQuery );
 
-            Book book;
-            if ( getBook(number, book ) )
+        if(query.exec())
+        {
+            books.clear();
+            while (query.next())
             {
-                books.append( book );
+                int number = query.value( 0 ).toInt();
+
+                Book book;
+                if ( getBook(number, book ) )
+                {
+                    books.append( book );
+                }
             }
         }
     }

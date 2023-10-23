@@ -217,6 +217,9 @@
     <file>rc/search.png</file>
     <file>rc/statistics.png</file>
     <file>rc/new.png</file>
+
+    <file>rc/info.png</file>
+
   </qresource>
   <qresource prefix="qdarkstyle">
       <file>style.css</file>

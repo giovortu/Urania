@@ -58,30 +58,20 @@
        <enum>QFrame::Raised</enum>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="2" column="0">
-        <widget class="QLabel" name="cover_author">
+       <item row="0" column="0">
+        <widget class="CopyableLabel" name="number">
          <property name="text">
-          <string>C.Caesar</string>
+          <string>N/A</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="date_pub">
+       <item row="2" column="1">
+        <widget class="CopyableLabel" name="author">
          <property name="text">
-          <string>20/07/1953</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="title_ita">
-         <property name="text">
-          <string>PARIA DEI CIELI</string>
+          <string>N/A</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
@@ -156,13 +146,10 @@
          </widget>
         </widget>
        </item>
-       <item row="3" column="1">
-        <widget class="QCheckBox" name="reprint">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
+       <item row="6" column="0">
+        <widget class="QCheckBox" name="read">
          <property name="text">
-          <string>Ristampa</string>
+          <string>Letto</string>
          </property>
         </widget>
        </item>
@@ -214,16 +201,6 @@
          </item>
         </layout>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="number">
-         <property name="text">
-          <string>20</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item row="7" column="0" colspan="2">
         <widget class="QTextEdit" name="comment">
          <property name="minimumSize">
@@ -240,10 +217,40 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
-        <widget class="QLabel" name="author">
+       <item row="0" column="1">
+        <widget class="CopyableLabel" name="title_ita">
          <property name="text">
-          <string>Isaac Asimov</string>
+          <string>N/A</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="reprint">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Ristampa</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="CopyableLabel" name="date_pub">
+         <property name="text">
+          <string>N/A</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="CopyableLabel" name="cover_author">
+         <property name="text">
+          <string>N/A</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
@@ -251,16 +258,9 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QLabel" name="title_orig">
+        <widget class="CopyableLabel" name="title_orig">
          <property name="text">
-          <string>PEBBLE IN THE SKY</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QCheckBox" name="read">
-         <property name="text">
-          <string>Letto</string>
+          <string>N/A</string>
          </property>
         </widget>
        </item>
@@ -319,6 +319,7 @@
    <addaction name="actionForwardTenBooks"/>
    <addaction name="actionLastBook"/>
    <addaction name="separator"/>
+   <addaction name="actionBookInfo"/>
    <addaction name="actionSearch"/>
    <addaction name="actionStatistics"/>
    <addaction name="actionNewBook"/>
@@ -428,7 +429,23 @@
     <string>New book</string>
    </property>
   </action>
+  <action name="actionBookInfo">
+   <property name="icon">
+    <iconset resource="../res/qdarkstyle/qdarkstyle.qrc">
+     <normaloff>:/qss_icons/rc/info.png</normaloff>:/qss_icons/rc/info.png</iconset>
+   </property>
+   <property name="text">
+    <string>Book Info</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CopyableLabel</class>
+   <extends>QLabel</extends>
+   <header>CopyableLabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../res/img/img.qrc"/>
   <include location="../res/qdarkstyle/qdarkstyle.qrc"/>

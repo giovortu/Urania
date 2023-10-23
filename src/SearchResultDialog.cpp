@@ -13,7 +13,7 @@ SearchResultDialog::SearchResultDialog(QWidget *parent) :
     m_table = new QTableWidget( this );
     ui->mainLayout->addWidget( m_table );
     m_table->setColumnCount(8);
-    QStringList headers = {"Number", "Title (ITA)", "Title (Original)", "Author", "Date Published", "Cover Author", "Owned", "Read"};
+    QStringList headers = {"Numero", "Titolo", "Tit. Orig.", "Autore", "Data", "Cover", "Poss.", "Letto"};
     m_table->setHorizontalHeaderLabels(headers);
 
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);

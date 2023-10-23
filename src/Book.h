@@ -68,6 +68,8 @@ public:
     bool reprint;
     bool read;
 
+    QString isbn;
+
     //support
     QString cover_image_path;
 

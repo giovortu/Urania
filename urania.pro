@@ -26,7 +26,11 @@ SOURCES +=  $$PWD/main.cpp \
             $$PWD/src/DbManager.cpp \
             $$PWD/src/SearchResultDialog.cpp \
             $$PWD/src/StarRating.cpp \
-            $$PWD/src/Statistics.cpp
+            $$PWD/src/Statistics.cpp \
+            $$PWD/src/BookEditor.cpp \
+            $$PWD/src/BookInfo.cpp \
+            $$PWD/src/CopyableLabel.cpp \
+            $$PWD/src/JsonFormWidget.cpp
 
 HEADERS += \
             $$PWD/src/Library.h \
@@ -35,12 +39,17 @@ HEADERS += \
             $$PWD/src/DbManager.h \
             $$PWD/src/SearchResultDialog.h \
             $$PWD/src/StarRating.h \
-            $$PWD/src/Statistics.h
+            $$PWD/src/Statistics.h \
+            $$PWD/src/BookEditor.h \
+            $$PWD/src/BookInfo.h \
+            $$PWD/src/CopyableLabel.h \
+            $$PWD/src/JsonFormWidget.h
 
 FORMS += \
             $$PWD/ui/MainWindow.ui \
             $$PWD/ui/SearchResultDialog.ui \
-            $$PWD/ui/Statistics.ui
+            $$PWD/ui/Statistics.ui \
+            $$PWD/ui/BookEditor.ui
 
 RESOURCES+= $$PWD/res/qdarkstyle/qdarkstyle.qrc \
             $$PWD/res/img/img.qrc

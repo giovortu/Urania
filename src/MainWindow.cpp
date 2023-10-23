@@ -16,6 +16,9 @@
 #include "SearchResultDialog.h"
 #include "Statistics.h"
 #include "SettingsManager.h"
+#include "BookInfo.h"
+#include "JsonFormWidget.h"
+#include "BookEditor.h"
 
 
 
@@ -45,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_database->addItem( "Urania rivista" , "uraniarivista.db");
     m_database->addItem( "Urania argento", "uraniaargento.db" );
+    m_database->addItem( "Zona 42", "zona42.db" );
 
     connect( m_database,&QComboBox::currentTextChanged, this, &MainWindow::onDatabaseChanged );
 
@@ -84,9 +88,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( m_current, &QLineEdit::returnPressed, this, &MainWindow::onCurrentChanged );
     connect( m_search, &QLineEdit::returnPressed, this, &MainWindow::onSearch );
+    connect( ui->actionSearch, &QAction::triggered, this, &MainWindow::onSearch );
 
-    connect( ui->owned, &QCheckBox::stateChanged, this, &MainWindow::onOwnedChanged );
-    connect( ui->read, &QCheckBox::stateChanged, this, &MainWindow::onReadChanged );
+    connect( ui->actionBookInfo, &QAction::triggered, this, &MainWindow::onBookInfo );
+
+    connect( ui->owned, &QCheckBox::clicked, this, &MainWindow::onOwnedChanged );
+    connect( ui->read, &QCheckBox::clicked, this, &MainWindow::onReadChanged );
 
     m_starRating = new StarRating( this );
 
@@ -101,14 +108,14 @@ MainWindow::MainWindow(QWidget *parent)
     QShortcut *rightShortcut = new QShortcut(Qt::ALT +Qt::Key_Right, this);
 
     QShortcut *setOwnShortCut = new QShortcut(Qt::ALT +Qt::Key_Up, this);
-    QShortcut *setOwnReadCut = new QShortcut(Qt::ALT +Qt::Key_Down, this);
+    QShortcut *setReadShortcut = new QShortcut(Qt::ALT +Qt::Key_Down, this);
 
     // Connect slots to the activated signals of the shortcuts
     connect(leftShortcut, &QShortcut::activated, this, &MainWindow::onPrevious);
     connect(rightShortcut, &QShortcut::activated, this, &MainWindow::onNext);
 
     connect(setOwnShortCut, &QShortcut::activated, this, &MainWindow::toggleOwned);
-    connect(setOwnReadCut, &QShortcut::activated, this, &MainWindow::toggleRead);
+    connect(setReadShortcut, &QShortcut::activated, this, &MainWindow::toggleRead);
 
 
     connect( ui->actionImportFromFile, &QAction::triggered, this, &MainWindow::onImportFromFile );
@@ -133,7 +140,6 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
-    //m_database->setCurrentIndex();
 
 
 }
@@ -165,21 +171,80 @@ void MainWindow::initLibrary()
 
 }
 
+void MainWindow::onBookInfo()
+{
+    auto info = new BookInfo( );
+
+    connect( info, &BookInfo::isbnFound, this, [=]( const QJsonObject & isbn ){
+
+        auto form = new JsonFormWidget( this );
+        form->loadJson( isbn );
+
+        form->show();
+
+        qWarning() << isbn;
+        info->deleteLater();
+
+    } );
+
+    connect( info, &BookInfo::bookNotFound, this,  [=]( ){
+
+        qWarning() << "Not found";
+        info->deleteLater();
+
+    } );
+
+    QStringList search;
+
+    Book book;
+    if ( m_library->getBook( m_currentBook, book ) )
+    {
+        QString title = book.title_ita.replace( QRegularExpression("[^a-zA-Z0-9]"), " " );
+        title = title.replace( QRegularExpression("\\s+") , " ");
+
+        QString author = book.author.replace( QRegularExpression("[^a-zA-Z0-9]"), " " );
+        author = author.replace( QRegularExpression("\\s+") , " ");
+
+        title = title.replace(" ","+" );
+        author = author.replace(" ","+" );
+
+        QString data = book.date_pub.toString("yyyy");
+
+
+        info->searchBookInfo( title+ "+"+ author + "+inpublisher:mondadori+" + data );
+    }
+
+
+
+}
+
 void MainWindow::viewBook(Book &book)
 {
     m_current->setText( QString::number( m_currentBook ) );
     ui->author->setText( book.author );
+    ui->author->setToolTip( book.author );
+
     ui->title_ita->setText( book.title_ita );
+    ui->title_ita->setToolTip( book.title_ita );
+
     ui->title_orig->setText( book.title_orig );
+    ui->title_orig->setToolTip( book.title_orig );
+
     ui->date_pub->setText( book.date_pub.toString("dd/MM/yyyy"));
+    ui->date_pub->setToolTip( book.date_pub.toString("dd/MM/yyyy"));
+
     ui->cover_author->setText( book.cover_author );
+    ui->cover_author->setToolTip( book.cover_author );
+
     ui->number->setText( QString::number( book.number ) );
+    ui->number->setToolTip( QString::number( book.number ) );
 
     ui->comment->setText( book.comment );
 
     ui->reprint->setChecked( book.reprint );
 
     m_starRating->setRating( book.stars / 10 );
+
 
     if ( !book.synopsis.isEmpty() )
     {
@@ -259,14 +324,14 @@ void MainWindow::onPrevious()
 
 void MainWindow::toggleOwned()
 {
-    ui->owned->setChecked( !ui->owned->isChecked() );
+    ui->owned->toggle();
 
     onOwnedChanged( false );
 }
 
 void MainWindow::toggleRead()
 {
-    ui->read->setChecked( !ui->read->isChecked() );
+    ui->read->toggle();
 
     onReadChanged( false );
 }
@@ -368,6 +433,22 @@ void MainWindow::onStatistics()
 
 void MainWindow::onNewBook()
 {
+    auto editor = new BookEditor( this );
+
+    Book book;
+
+    editor->setBook( &book );
+
+    if ( QDialog::Accepted == editor->exec() )
+    {
+        int index = m_library->getBookCount();
+
+        book.number = index + 1;
+        m_library->addBook( book );
+        m_currentBook = book.number;
+        viewBook( book );
+    }
+
 
 }
 

@@ -70,6 +70,8 @@ public slots:
 
     void initLibrary();
 
+    void onBookInfo();
+
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 

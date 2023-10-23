@@ -38,6 +38,7 @@ public slots:
 
     bool addIndex( int number, const Index &index );
 
+    //int getBookNumberFromIndex( int index );
 
 
 
