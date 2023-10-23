@@ -7,18 +7,20 @@ JsonFormWidget::JsonFormWidget(QWidget* parent) : QWidget(parent)
     setWindowFlags(Qt::Window );//| Qt::WindowStaysOnTopHint);
 
     formLayout = new QFormLayout(this);
-
-    auto vbox = new QVBoxLayout(this);
-    setLayout( vbox );
-
     QScrollArea* scrollArea = new QScrollArea(this);
+    QWidget* contentWidget = new QWidget(scrollArea);
+
+    // Add your widgets and layout to the content widget here.
+
+    // Set the content widget for the scroll area
+    scrollArea->setWidget(contentWidget);
     scrollArea->setWidgetResizable(true);
 
-    QWidget* formWidget = new QWidget(this);
-    formWidget->setLayout(formLayout);
+    contentWidget->setLayout( formLayout );
 
-    scrollArea->setWidget(formWidget);
-
+    // Add the scroll area to your layout (e.g., QVBoxLayout)
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(scrollArea);
 }
 
 void JsonFormWidget::loadJson(const QJsonObject& jsonObject)
@@ -32,6 +34,42 @@ void JsonFormWidget::loadJson(const QJsonObject& jsonObject)
 
     displayLabels.clear();
     createFormFields(jsonObject);
+    formLayout->update();
+
+}
+
+void JsonFormWidget::displayJsonData(const QJsonObject& jsonObject, QLayout* layout)
+{
+    for (auto it = jsonObject.begin(); it != jsonObject.end(); ++it) {
+        QString key = it.key();
+        QJsonValue value = it.value();
+
+        // Create a QLabel for the key
+        QLabel* keyLabel = new QLabel(key);
+        layout->addWidget(keyLabel);
+
+        // Check the value's type
+        if (value.isObject()) {
+            // If the value is an object, recursively call the function
+            QJsonObject nestedObject = value.toObject();
+            QVBoxLayout* nestedLayout = new QVBoxLayout;
+            layout->addItem(nestedLayout);
+            displayJsonData(nestedObject, nestedLayout);
+        } else if (value.isArray()) {
+            // If the value is an array, recursively call the function for each item
+            QJsonArray array = value.toArray();
+            QVBoxLayout* arrayLayout = new QVBoxLayout;
+            layout->addItem(arrayLayout);
+            for (int i = 0; i < array.size(); ++i) {
+                QJsonValue arrayValue = array[i];
+                displayJsonData(arrayValue.toObject(), arrayLayout);
+            }
+        } else {
+            // If it's a simple value, just display it as text
+            QLabel* valueLabel = new QLabel(value.toString());
+            layout->addWidget(valueLabel);
+        }
+    }
 }
 
 void JsonFormWidget::createFormFields(const QJsonObject& jsonObject, const QString& parentKey)
@@ -50,6 +88,7 @@ void JsonFormWidget::createFormFields(const QJsonObject& jsonObject, const QStri
         } else {
             // Create a QLabel for display
             QLabel* label = new QLabel(value.toString(), this);
+            label->setWordWrap( true );
             displayLabels[fullKey] = label;
 
             formLayout->addRow(key, label);

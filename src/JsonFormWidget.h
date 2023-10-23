@@ -20,6 +20,7 @@ public:
     JsonFormWidget(QWidget* parent = nullptr);
 
     void loadJson(const QJsonObject& jsonObject);
+    void displayJsonData(const QJsonObject& jsonObject, QLayout* layout);
 
 private:
     QFormLayout* formLayout;
