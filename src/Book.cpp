@@ -48,7 +48,7 @@ QString findTextValue(const QDomNode& node) {
     {
         if (child.isElement())
         {
-            return findTextValue(child).trimmed(); // Recurse into child elements
+            return  QString::fromUtf8( findTextValue(child).trimmed().toLatin1().constData());
         }
         else if (child.isText())
         {
@@ -63,7 +63,7 @@ QString findTextValue(const QDomNode& node) {
         child = child.nextSibling();
     }
 
-    return retVal.trimmed();
+    return QString::fromUtf8(  retVal.trimmed().toLatin1().constData());
 }
 
 QString findImageSRC(const QDomNode& node)
@@ -201,13 +201,13 @@ bool Book::isValid()
 {
     return
        number != 0 &&
-     ! title_ita.isEmpty() &&
+     //! title_ita.isEmpty() &&
      //! title_orig.isEmpty() && Can be original
      //! author.isEmpty() && Can be an antology
        date_pub.isValid() &&
      //! cover_author.isEmpty() &&  can be stock image
-     ! cover_image.isEmpty() &&
-     ( !synopsis.isEmpty() || !synopsis_image.isEmpty() ) ;
+     ! cover_image.isEmpty() ;//&&
+     //( !synopsis.isEmpty() || !synopsis_image.isEmpty() ) ;
 
 }
 
@@ -216,19 +216,21 @@ bool Book::fromHTML(const QString &path)
 {
 
 
-    std::ifstream inputFile(path.toStdString() , std::ios::in);
-    if (!inputFile.is_open())
-    {
-      std::cerr << "Failed to open the HTML file." << std::endl;
-      return false;
-    }
 
     QFileInfo fileInfo(path);
 
     QString root = fileInfo.absolutePath();
 
-    std::string htmlContent((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
-    inputFile.close();
+    QFile file(path);
+    if ( ! file.open( QIODevice::ReadOnly ))
+    {
+        return false;
+    }
+
+
+
+    std::string htmlContent = QString::fromUtf8( file.readAll()).toStdString();  //(std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
+    //inputFile.close();
 
 
 
@@ -257,20 +259,25 @@ bool Book::fromHTML(const QString &path)
 
 
             QString converted = QString( (char*)output.bp );
+
 #ifdef VERBOSE
             qWarning().noquote() << "Converted XHTML:\n" << converted;
 #endif
 
+            converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
             converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
             converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
             converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+            converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
             converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
             converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
             converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
 
             converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
-            converted = converted.replace( "</string>" , "", Qt::CaseInsensitive);
+            converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
             converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
             converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
             converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
             converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
@@ -279,7 +286,7 @@ bool Book::fromHTML(const QString &path)
 
 
 
-#ifdef VERBOSE
+#ifndef VERBOSE
             qWarning().noquote() << "Converted XHTML:\n" << converted;
 #endif
 
@@ -305,6 +312,23 @@ bool Book::fromHTML(const QString &path)
             if (tables.size() > 0 )
             {
                 QDomNode table = tables.at(currentTable);
+
+                QDomNodeList tdElements = table.toElement().elementsByTagName("td");
+
+                if (!tdElements.isEmpty())
+                {
+                    QDomElement tdElement = tdElements.at(0).toElement();
+
+                    // Check if the first <td> element contains a table
+                    QDomNodeList innerTables = tdElement.elementsByTagName("table");
+
+                    if (!innerTables.isEmpty()) {
+                        table = tables.at(++currentTable);
+                    }
+                }
+
+
+
 
                 QDomNodeList rows = table.toElement().elementsByTagName("tr"); // Find rows
 #ifdef VERBOSE

@@ -4,10 +4,10 @@
 #include <QDirIterator>
 #include <QThread>
 
-Library::Library(QObject *parent)
+Library::Library(const QString &database,QObject *parent)
     : QObject{parent}
 {
-    m_books = new DbManager( "urania.db" , this);
+    m_books = new DbManager( database , this);
 
     m_books->createTables();
 
@@ -53,9 +53,9 @@ QList<Book> Library::getReadBooks()
 
 }
 
-bool Library::populateDatabase(const QString &path)
+bool Library::populateDatabase(const QString &path, const QString &basename)
 {
-
+    int count = 1;
     QDirIterator it(path, QStringList(), QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags); // only top dir
     while (it.hasNext())
     {
@@ -73,7 +73,7 @@ bool Library::populateDatabase(const QString &path)
 
         for ( int i = start; i <= end; i++ )
         {
-            QString name = QString( "%1/urania%2.htm").arg(subpath) .arg( i );
+            QString name = QString( "%1/%2%4.htm").arg(subpath).arg( basename ).arg( i );
 
             qWarning() << name;
 
@@ -82,6 +82,15 @@ bool Library::populateDatabase(const QString &path)
 
             Book book;
             book.fromHTML( name );
+            if ( book.number <=0 )
+            {
+                book.number = count ++;
+            }
+            else
+            {
+                count = book.number+1;
+            }
+
             if ( book.isValid() )
             {
                  m_books->addBook( book );

@@ -66,11 +66,17 @@ public slots:
 
     void writeSettings();
 
+    void onDatabaseChanged( const QString &txt );
+
+    void initLibrary();
+
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 
 private:
     int m_currentBook = 1;
+
+    QString m_currentDatabase;
 
     QNetworkAccessManager m_manager;
 
@@ -78,6 +84,7 @@ private:
     QLineEdit *m_search;
 
     QComboBox *m_searchType;
+    QComboBox *m_database;
     Library *m_library;
 
     StarRating *m_starRating;

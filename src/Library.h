@@ -12,7 +12,7 @@ class Library : public QObject
 {
     Q_OBJECT
 public:
-    explicit Library(QObject *parent = nullptr);
+    explicit Library(const QString &database, QObject *parent = nullptr);
 
 
     QString searchBooks( const QString &text, int type, QList<Book> &books );
@@ -30,7 +30,7 @@ signals:
 
 public slots:
 
-    bool populateDatabase( const QString & path );
+    bool populateDatabase( const QString & path, const QString &basename="urania" );
 
     bool addBook( const Book &book );
     bool updateBookOwned( int number, bool owned );

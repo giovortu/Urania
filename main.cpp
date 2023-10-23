@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QApplication>
 
+#include "Library.h"
 
 int main(int argc, char *argv[])
 {
@@ -12,7 +13,9 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(img);
 
     QApplication a(argc, argv);
+
 #if 1
+
     MainWindow w;
 
     QFile f(":/qdarkstyle/style.css");
@@ -33,10 +36,14 @@ int main(int argc, char *argv[])
 
     w.show();
 #else
-    Book book;
-    book.fromHTML("C:/Users/giovortu/Downloads/Urania/www.mondourania.com/urania/u861-880/urania880.htm");
+
+    auto lib = new Library("uraniaspeciali.db", nullptr);
+
+    lib->populateDatabase( "C:/Users/giovortu/Downloads/Urania/www.mondourania.com/speciali/speciali", "speciali" );
 
 #endif
+
     return a.exec();
+
 }
 

@@ -290,8 +290,8 @@ bool DbManager::getBook(int number, Book &book)
 
 
     QSqlQuery query;
-    query.prepare("SELECT * FROM books WHERE number = (:number)");
-    query.bindValue(":number", number);
+    query.prepare("SELECT * FROM books ORDER BY number  LIMIT 1 OFFSET :offset");
+    query.bindValue(":offset", number -1);
     if(query.exec())
     {
 
@@ -333,19 +333,17 @@ bool DbManager::getBook(int number, Book &book)
 
 int DbManager::getBookCount()
 {
-    if ( m_currentBookCount < 0 )
+    QSqlQuery query;
+    query.prepare("SELECT MAX(number) as num_books FROM books");
+    if(query.exec())
     {
-        QSqlQuery query;
-        query.prepare("SELECT MAX(number) as num_books FROM books");
-        if(query.exec())
+        if(query.next())
         {
-            if(query.next())
-            {
-                qWarning() <<  query.value( 0 ).toInt();
-                m_currentBookCount =  query.value( 0 ).toInt();
-            }
+            qWarning() <<  query.value( 0 ).toInt();
+            m_currentBookCount =  query.value( 0 ).toInt();
         }
     }
+
     return m_currentBookCount;
 }
 

@@ -116,7 +116,7 @@
             <x>0</x>
             <y>0</y>
             <width>503</width>
-            <height>68</height>
+            <height>347</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -195,7 +195,7 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>250</height>
+             <height>0</height>
             </size>
            </property>
            <property name="text">
@@ -225,7 +225,20 @@
         </widget>
        </item>
        <item row="7" column="0" colspan="2">
-        <widget class="QTextEdit" name="comment"/>
+        <widget class="QTextEdit" name="comment">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>100</height>
+          </size>
+         </property>
+        </widget>
        </item>
        <item row="2" column="1">
         <widget class="QLabel" name="author">

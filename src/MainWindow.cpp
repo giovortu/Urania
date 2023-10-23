@@ -30,9 +30,27 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    m_library = nullptr;
+
     auto sett = new SettingsManager( this );
 
     m_settings = sett->settings();
+
+
+    m_database = new QComboBox( this );
+    m_database->addItem( "Urania" , "urania.db");
+    m_database->addItem( "Urania bis" , "uraniabis.db");
+    m_database->addItem( "Urania speciali" , "uraniaspeciali.db");
+    m_database->addItem( "Urania Jumbo" , "uraniajumbo.db");
+
+    m_database->addItem( "Urania rivista" , "uraniarivista.db");
+    m_database->addItem( "Urania argento", "uraniaargento.db" );
+
+    connect( m_database,&QComboBox::currentTextChanged, this, &MainWindow::onDatabaseChanged );
+
+
+
+    ui->toolBar->insertWidget(ui->actionFirstBook, m_database);
 
     m_current = new QLineEdit( this );
     m_current->setFixedWidth( 100 );
@@ -100,17 +118,22 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( ui->actionNewBook, &QAction::triggered, this, &MainWindow::onNewBook );
 
-    m_library = new Library();
 
 
     readSettings();
 
-    Book book;
+    initLibrary();
 
-    if ( m_library->getBook( m_currentBook, book ) )
-    {
-        viewBook( book );
+    int itemCount = m_database->count();
+    for (int i = 0; i < itemCount; ++i) {
+        QString itemDataValue = m_database->itemData(i).toString(); // Assuming the data is of type int
+        if (itemDataValue == m_currentDatabase) {
+            m_database->setCurrentIndex(i); // Set the current item based on matching data
+            break; // Exit the loop once a match is found
+        }
     }
+
+    //m_database->setCurrentIndex();
 
 
 }
@@ -118,6 +141,28 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::initLibrary()
+{
+    if ( nullptr != m_library )
+    {
+        delete m_library;
+    }
+
+    m_library = new Library( m_currentDatabase );
+    if ( m_currentBook > m_library->getBookCount() )
+    {
+       m_currentBook = 1;
+    }
+
+    Book book;
+
+    if ( m_library->getBook( m_currentBook, book ) )
+    {
+      viewBook( book );
+    }
+
 }
 
 void MainWindow::viewBook(Book &book)
@@ -190,9 +235,12 @@ void MainWindow::onNext()
     if (m_currentBook < m_library->getBookCount())
     {
        Book book;
-       m_library->getBook( ++m_currentBook, book );
-       viewBook( book );
-       m_current->setText( QString::number( m_currentBook ) );
+
+       if (  m_library->getBook( ++m_currentBook, book ) )
+       {
+         viewBook( book );
+         m_current->setText( QString::number( m_currentBook ) );
+       }
     }
 }
 
@@ -201,9 +249,11 @@ void MainWindow::onPrevious()
     if (m_currentBook > 1)
     {
        Book book;
-       m_library->getBook( --m_currentBook, book );
-       viewBook( book );
-       m_current->setText( QString::number( m_currentBook ) );
+       if ( m_library->getBook( --m_currentBook, book ) )
+       {
+           viewBook( book );
+           m_current->setText( QString::number( m_currentBook ) );
+       }
     }
 }
 
@@ -224,6 +274,9 @@ void MainWindow::toggleRead()
 void MainWindow::onNextTen()
 {
     int prev = m_currentBook + 10;
+
+    Book book;
+
     if (  prev <= m_library->getBookCount() )
     {
         loadBook( prev );
@@ -239,6 +292,9 @@ void MainWindow::onNextTen()
 void MainWindow::onPreviuosTen()
 {
     int prev = m_currentBook - 10;
+
+    Book book;
+
     if (  prev >=1 )
     {
         loadBook( prev );
@@ -262,9 +318,11 @@ void MainWindow::loadBook(int value)
     {
         Book book;
         m_currentBook = value;
-        m_library->getBook( m_currentBook, book );
-        m_current->setText( QString::number( m_currentBook) );
-        viewBook( book );
+        if ( m_library->getBook( m_currentBook, book ) )
+        {
+            m_current->setText( QString::number( m_currentBook) );
+            viewBook( book );
+        }
     }
 }
 
@@ -317,8 +375,7 @@ void MainWindow::readSettings()
 {
     m_settings->beginGroup("settings");
         m_currentBook = m_settings->value("current_book", 1 ).toInt();
-        qWarning() << m_currentBook;
-
+        m_currentDatabase = m_settings->value("current_database", "urania.db" ).toString();
     m_settings->endGroup();
 }
 
@@ -326,7 +383,20 @@ void MainWindow::writeSettings()
 {
     m_settings->beginGroup("settings");
         m_settings->setValue("current_book", m_currentBook );
-        m_settings->endGroup();
+        m_settings->setValue("current_database", m_currentDatabase );
+    m_settings->endGroup();
+}
+
+void MainWindow::onDatabaseChanged(const QString &txt)
+{
+    QString db = m_database->currentData().toString();
+    if ( db != m_currentDatabase )
+    {
+        m_currentDatabase = db;
+        m_currentBook = 1;
+        initLibrary();
+    }
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -365,8 +435,14 @@ void MainWindow::onCurrentChanged()
     {
         Book book;
         m_currentBook = value;
-        m_library->getBook( m_currentBook, book );
-        viewBook( book );
+        if ( m_library->getBook( m_currentBook, book ) )
+        {
+            viewBook( book );
+        }
+        else
+        {
+
+        }
     }
 
 }
