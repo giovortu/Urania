@@ -39,7 +39,8 @@ bool DbManager::createTables()
                   stars INTEGER, \
                   comment TEXT, \
                   reprint BOOL, \
-                  read BOOL );");
+                  read BOOL, \
+                  collana TEXT );");
 
     if(query.exec())
     {
@@ -76,8 +77,8 @@ bool DbManager::addBook(const Book &book)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -92,6 +93,9 @@ bool DbManager::addBook(const Book &book)
     query.bindValue(":stars", book.stars);
     query.bindValue(":comment", book.comment);
     query.bindValue(":read", book.read);
+    query.bindValue(":collana", book.collana);
+
+
 
     if(query.exec())
     {
@@ -439,6 +443,7 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.comment =           query.value( query.record().indexOf("comment") ).toString();
     book.reprint =           query.value( query.record().indexOf("reprint") ).toBool();
     book.read =              query.value( query.record().indexOf("read") ).toBool();
+    book.collana =           query.value( query.record().indexOf("collana") ).toString();
 
     return book;
 }

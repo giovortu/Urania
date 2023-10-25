@@ -70,6 +70,8 @@ public:
 
     QString isbn;
 
+    QString collana;
+
     //support
     QString cover_image_path;
 

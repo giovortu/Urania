@@ -224,6 +224,8 @@ void MainWindow::viewBook(Book &book)
     ui->author->setText( book.author );
     ui->author->setToolTip( book.author );
 
+    ui->collana->setText( book.collana );
+
     ui->title_ita->setText( book.title_ita );
     ui->title_ita->setToolTip( book.title_ita );
 

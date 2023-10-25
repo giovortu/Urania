@@ -33,6 +33,7 @@ void BookEditor::setBook( Book *book)
     ui.commentEdit->setText(book->comment);
     ui.reprintCheckbox->setChecked(book->reprint);
     ui.readCheckbox->setChecked(book->read);
+    ui.collanaEdit->setText(book->collana);
 
     // Connect additional signals and slots to update Book object's attributes
 }
@@ -51,6 +52,7 @@ void BookEditor::saveData()
     book->comment = ui.commentEdit->toPlainText();
     book->reprint = ui.reprintCheckbox->isChecked();
     book->read = ui.readCheckbox->isChecked();
+    book->collana = ui.collanaEdit->text();
 
     accept();
 
@@ -64,9 +66,13 @@ void BookEditor::loadCover()
     QFile file( img );
     if ( file.open(QIODevice::ReadOnly) )
     {
+        QFileInfo info( img );
         QByteArray bytes = file.readAll();
 
         book->cover_image = bytes;
+
+        ui.coverEdit->setText(info.fileName());
+
 
     }
 

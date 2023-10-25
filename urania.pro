@@ -14,7 +14,9 @@ CONFIG += c++17
 
 INCLUDEPATH += $$PWD/src $$PWD/libs/tidy/include
 
-LIBS+=$$PWD/libs/tidy/tidy.dll
+#LIBS+=$$PWD/libs/tidy/tidy.dll
+LIBS+=$$PWD/libs/tidy/tidy_static.lib
+
 
 include( $$PWD/src/settings/settings.pri )
 
