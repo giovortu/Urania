@@ -156,7 +156,7 @@ void MainWindow::initLibrary()
         delete m_library;
     }
 
-    m_library = new Library( m_currentDatabase );
+    m_library = new Library( "database/" + m_currentDatabase );
     if ( m_currentBook > m_library->getBookCount() )
     {
        m_currentBook = 1;
@@ -210,8 +210,10 @@ void MainWindow::onBookInfo()
 
         QString data = book.date_pub.toString("yyyy");
 
+        QString editore = book.editore.replace(" ","%20");
 
-        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  book.editore + "+" + data );
+
+        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  editore + "+" + data );
 
     }
 
