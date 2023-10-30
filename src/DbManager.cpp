@@ -77,8 +77,8 @@ bool DbManager::addBook(const Book &book)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana,editore) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana,:editore)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -94,7 +94,7 @@ bool DbManager::addBook(const Book &book)
     query.bindValue(":comment", book.comment);
     query.bindValue(":read", book.read);
     query.bindValue(":collana", book.collana);
-
+    query.bindValue(":editore", book.editore);
 
 
     if(query.exec())
@@ -444,6 +444,7 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.reprint =           query.value( query.record().indexOf("reprint") ).toBool();
     book.read =              query.value( query.record().indexOf("read") ).toBool();
     book.collana =           query.value( query.record().indexOf("collana") ).toString();
+    book.editore =           query.value( query.record().indexOf("editore") ).toString();
 
     return book;
 }

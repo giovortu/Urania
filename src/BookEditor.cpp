@@ -13,6 +13,8 @@ BookEditor::BookEditor(QWidget* parent) : QDialog(parent)
 
     connect(ui.coverButton, &QPushButton::clicked, this, &BookEditor::loadCover);
 
+    connect( ui.closeButton, &QPushButton::clicked, this, &BookEditor::reject );
+
 }
 
 void BookEditor::setBook( Book *book)
@@ -34,6 +36,7 @@ void BookEditor::setBook( Book *book)
     ui.reprintCheckbox->setChecked(book->reprint);
     ui.readCheckbox->setChecked(book->read);
     ui.collanaEdit->setText(book->collana);
+    ui.editoreEdit->setText(book->editore);
 
     // Connect additional signals and slots to update Book object's attributes
 }
@@ -53,6 +56,8 @@ void BookEditor::saveData()
     book->reprint = ui.reprintCheckbox->isChecked();
     book->read = ui.readCheckbox->isChecked();
     book->collana = ui.collanaEdit->text();
+    book->editore = ui.editoreEdit->text();
+
 
     accept();
 

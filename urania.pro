@@ -45,7 +45,8 @@ HEADERS += \
             $$PWD/src/BookEditor.h \
             $$PWD/src/BookInfo.h \
             $$PWD/src/CopyableLabel.h \
-            $$PWD/src/JsonFormWidget.h
+            $$PWD/src/JsonFormWidget.h \
+            $$PWD/src/version.h
 
 FORMS += \
             $$PWD/ui/MainWindow.ui \
@@ -60,3 +61,11 @@ RESOURCES+= $$PWD/res/qdarkstyle/qdarkstyle.qrc \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+win32 {
+
+RC_FILE = $$PWD/res/urania.rc
+
+}
+
+

@@ -211,7 +211,8 @@ void MainWindow::onBookInfo()
         QString data = book.date_pub.toString("yyyy");
 
 
-        info->searchBookInfo( title+ "+"+ author + "+inpublisher:mondadori+" + data );
+        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  book.editore + "+" + data );
+
     }
 
 
@@ -246,6 +247,8 @@ void MainWindow::viewBook(Book &book)
     ui->reprint->setChecked( book.reprint );
 
     m_starRating->setRating( book.stars / 10 );
+
+    ui->editore->setText( book.editore );
 
 
     if ( !book.synopsis.isEmpty() )

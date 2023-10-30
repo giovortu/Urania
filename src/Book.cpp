@@ -123,6 +123,7 @@ Book::Book()
     stars = 0;
     comment = "";
     collana = "";
+    editore = "";
     reprint = false;
     read = false;
 }
@@ -146,6 +147,8 @@ bool Book::fromJson(const QJsonObject &obj)
     reprint = obj["reprint"].toBool();
     read = obj["read"].toBool();
     collana = obj["collana"].toString();
+    editore = obj["editore"].toString();
+
 
 
     QJsonArray indexArray = obj["index"].toArray();
@@ -178,8 +181,7 @@ QJsonObject Book::toJson()
     obj["reprint"] = reprint;
     obj["read"] = read;
     obj["collana"] = collana;
-
-
+    obj["editore"] = editore;
 
 
     QJsonArray indexArray;
