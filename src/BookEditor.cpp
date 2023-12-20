@@ -1,8 +1,8 @@
 #include <QFileDialog>
 #include <QFile>
 
-#include "bookeditor.h"
-#include "book.h"
+#include "BookEditor.h"
+#include "Book.h"
 
 BookEditor::BookEditor(QWidget* parent) : QDialog(parent)
 {

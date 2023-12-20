@@ -2,7 +2,7 @@
 #define BOOKEDITOR_H
 
 #include <QWidget>
-#include "ui_bookeditor.h"  // Generated UI header
+#include "ui_BookEditor.h"  // Generated UI header
 #include "Book.h"           // Include the Book class definition
 
 namespace Ui {
