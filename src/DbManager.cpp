@@ -238,7 +238,7 @@ bool DbManager::addIndex(int number, const Index &index)
     query.prepare("INSERT OR REPLACE INTO indexes (number,title, author) "
                   "VALUES    (:number,:title,:author)");
 
-    query.bindValue(":number", number - 1);
+    query.bindValue(":number", number );
     query.bindValue(":title", index.title);
     query.bindValue(":author", index.author);
     if(query.exec())

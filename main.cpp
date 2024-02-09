@@ -2,10 +2,12 @@
 #include "src/MainWindow.h"
 
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
 #include <QApplication>
 
 #include "Library.h"
-
+#include "OwnCloudUploader.h"
 
 int main(int argc, char *argv[])
 {
@@ -37,9 +39,29 @@ int main(int argc, char *argv[])
     w.show();
 #else
 
-    auto lib = new Library("uraniaspeciali.db", nullptr);
+    OwnCloudUploader uploader;
 
-    lib->populateDatabase( "C:/Users/giovortu/Downloads/Urania/www.mondourania.com/speciali/speciali", "speciali" );
+    QObject::connect( &uploader, &OwnCloudUploader::uploadProgress, [](int progress, int total) {
+        qDebug() << "Progress: " << progress << " / " << total;
+    });
+
+
+    QString path = QApplication::applicationDirPath() + "/database/";
+
+    QDir dir(path);
+    QFileInfoList list = dir.entryInfoList();
+
+    foreach( QFileInfo info, list )
+    {
+        if (info.isFile())
+        {
+            QString fileName = path + info.fileName();
+            qDebug() << "Uploading " << info.fileName();
+            uploader.enqueueUpload(fileName, "/Urania");
+        }
+    }
+
+
 
 #endif
 

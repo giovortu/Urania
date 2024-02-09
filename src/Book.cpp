@@ -462,9 +462,19 @@ bool Book::fromHTML(const QString &path)
 
                 }
 
-                if (tables.size() > 1 ) //Indice
+                qWarning() << tables.size() << "tables found";
+
+
+                int idx = -1;
+                if (tables.size() == 3 )
+                    idx = 1;
+
+                if (tables.size() > 3 )
+                    idx = 2;
+
+                if (idx >=0 ) //Indice
                 {
-                    QDomNode table = tables.at(1);
+                    QDomNode table = tables.at( idx );
 
                     QDomNodeList rows = table.toElement().elementsByTagName("tr"); // Find rows
 

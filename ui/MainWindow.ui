@@ -337,6 +337,7 @@
    <addaction name="actionSearch"/>
    <addaction name="actionStatistics"/>
    <addaction name="actionNewBook"/>
+   <addaction name="actionUpload"/>
   </widget>
   <action name="actionPrevious">
    <property name="icon">
@@ -452,6 +453,15 @@
     <string>Book Info</string>
    </property>
   </action>
+  <action name="actionUpload">
+   <property name="icon">
+    <iconset resource="../res/qdarkstyle/qdarkstyle.qrc">
+     <normaloff>:/qss_icons/rc/arrow_up_focus.png</normaloff>:/qss_icons/rc/arrow_up_focus.png</iconset>
+   </property>
+   <property name="text">
+    <string>Upload</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -461,8 +471,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../res/qdarkstyle/qdarkstyle.qrc"/>
   <include location="../res/img/img.qrc"/>
+  <include location="../res/qdarkstyle/qdarkstyle.qrc"/>
  </resources>
  <connections/>
 </ui>

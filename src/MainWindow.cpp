@@ -19,7 +19,7 @@
 #include "BookInfo.h"
 #include "JsonFormWidget.h"
 #include "BookEditor.h"
-
+#include "DatabaseUploader.h"
 
 
 qreal roundToHalf(qreal value) {
@@ -125,6 +125,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( ui->actionNewBook, &QAction::triggered, this, &MainWindow::onNewBook );
 
+    connect( ui->actionUpload, &QAction::triggered, this, &MainWindow::onUpload );
 
 
     readSettings();
@@ -455,6 +456,17 @@ void MainWindow::onNewBook()
         m_currentBook = book.number;
         viewBook( book );
     }
+
+
+}
+
+void MainWindow::onUpload()
+{
+    auto uploader = new DatabaseUploader( nullptr );
+    uploader->show();
+
+    uploader->startUpload();
+
 
 
 }
