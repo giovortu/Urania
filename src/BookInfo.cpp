@@ -1,4 +1,4 @@
-#include "bookinfo.h"
+#include "BookInfo.h"
 #include <QtNetwork>
 #include <QNetworkRequest>
 #include <QNetworkReply>
