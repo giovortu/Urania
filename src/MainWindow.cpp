@@ -105,9 +105,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_starRating = new StarRating( this );
 
+
     connect( m_starRating, &StarRating::ratingChanged, this, &MainWindow::onRatingChanged );
 
-    connect( ui->saveComments, &QPushButton::clicked, this, &MainWindow::onSaveComments );
+    auto saveComments = new QPushButton( this );
+    saveComments->setText(tr("Save Comments"));
+    ui->saveCommentsLayout->addWidget(saveComments, 0, Qt::AlignRight);
+
+    connect( saveComments, &QPushButton::clicked, this, &MainWindow::onSaveComments );
+
+
 
 
     auto lay = qobject_cast<QGridLayout*>(ui->frame->layout());
@@ -161,14 +168,25 @@ void MainWindow::initLibrary()
 
     QStringList collane = m_library->getCollane();
 
-    m_nomeCollana = collane.at(0);
+    if ( m_nomeCollana == "" )
+    {
+        m_nomeCollana = collane.at(0);
+    }
 
     m_library->setCollana( m_nomeCollana );
+
+    m_collana->blockSignals(true);
+
+    m_collana->clear();
 
     foreach( QString collana, collane )
     {
         m_collana->addItem( collana );
     }
+
+    m_collana->setCurrentText( m_nomeCollana );
+
+    m_collana->blockSignals(false);
 
     updateView();
 
@@ -177,7 +195,6 @@ void MainWindow::initLibrary()
 void MainWindow::updateView()
 {
     m_library->setCollana( m_nomeCollana );
-    m_currentBookNumber = 1;
 
     m_totalBooks->setText( QString::number( m_library->getBooksCount() ) );
 
@@ -510,7 +527,7 @@ void MainWindow::readSettings()
 {
     m_settings->beginGroup("settings");
         m_currentBookNumber = m_settings->value("current_book", 1 ).toInt();
-        m_currentDatabase = m_settings->value("current_database", "urania.db" ).toString();
+        m_nomeCollana = m_settings->value("nome_collana", "Urania" ).toString();
     m_settings->endGroup();
 }
 
@@ -518,7 +535,7 @@ void MainWindow::writeSettings()
 {
     m_settings->beginGroup("settings");
         m_settings->setValue("current_book", m_currentBookNumber );
-        m_settings->setValue("current_database", m_currentDatabase );
+        m_settings->setValue("nome_collana", m_nomeCollana );
     m_settings->endGroup();
 }
 
