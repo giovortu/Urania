@@ -37,7 +37,8 @@ SOURCES +=  $$PWD/main.cpp \
             $$PWD/src/CopyableLabel.cpp \
             $$PWD/src/JsonFormWidget.cpp \
             $$PWD/src/DatabaseUploader.cpp \
-            $$PWD/src/OwnCloudUploader.cpp
+            $$PWD/src/OwnCloudUploader.cpp \
+            src/JsonEditor.cpp
 
 HEADERS += \
             $$PWD/src/Library.h \
@@ -53,7 +54,8 @@ HEADERS += \
             $$PWD/src/JsonFormWidget.h \
             $$PWD/src/version.h \
             $$PWD/src/DatabaseUploader.h \
-            $$PWD/src/OwnCloudUploader.h
+            $$PWD/src/OwnCloudUploader.h \
+            src/JsonEditor.h
 
 FORMS += \
             $$PWD/ui/MainWindow.ui \

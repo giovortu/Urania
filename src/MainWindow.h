@@ -31,6 +31,8 @@ public:
 
 public slots:
 
+    void onSettings();
+
     void viewBook( Book & book );
     void onNext(  );
     void onPrevious(  );

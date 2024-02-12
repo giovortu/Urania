@@ -20,7 +20,7 @@
 #include "JsonFormWidget.h"
 #include "BookEditor.h"
 #include "DatabaseUploader.h"
-
+#include "JsonEditor.h"
 
 qreal roundToHalf(qreal value) {
     return qRound(value * 2.0) / 2.0;
@@ -46,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect( m_collana,&QComboBox::currentTextChanged, this, &MainWindow::onCollanaChanged );
 
 
+    connect( ui->actionSettings, &QAction::triggered, this, &MainWindow::onSettings );
 
     ui->toolBar->insertWidget(ui->actionFirstBook, m_collana);
 
@@ -155,6 +156,16 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::onSettings()
+{
+    QString json = QApplication::applicationDirPath() + "/settings/urania/config.json";
+
+    auto editor = new JsonEditor(json, this );
+    editor->exec();
+
+
 }
 
 void MainWindow::initLibrary()
@@ -526,16 +537,16 @@ void MainWindow::onUpload()
 void MainWindow::readSettings()
 {
     m_settings->beginGroup("settings");
-        m_currentBookNumber = m_settings->value("current_book", 1 ).toInt();
-        m_nomeCollana = m_settings->value("nome_collana", "Urania" ).toString();
+        m_currentBookNumber = m_settings->value("_current_book", 1 ).toInt();
+        m_nomeCollana = m_settings->value("_nome_collana", "Urania" ).toString();
     m_settings->endGroup();
 }
 
 void MainWindow::writeSettings()
 {
     m_settings->beginGroup("settings");
-        m_settings->setValue("current_book", m_currentBookNumber );
-        m_settings->setValue("nome_collana", m_nomeCollana );
+        m_settings->setValue("_current_book", m_currentBookNumber );
+        m_settings->setValue("_nome_collana", m_nomeCollana );
     m_settings->endGroup();
 }
 

@@ -352,10 +352,20 @@
    </property>
    <widget class="QMenu" name="menuUrania">
     <property name="title">
-     <string>Urania</string>
+     <string>Book</string>
     </property>
+    <addaction name="separator"/>
+    <addaction name="actionNewBook"/>
+    <addaction name="separator"/>
+    <addaction name="actionFirstBook"/>
+    <addaction name="actionBackTenBooks"/>
     <addaction name="actionPrevious"/>
     <addaction name="actionNext"/>
+    <addaction name="actionForwardTenBooks"/>
+    <addaction name="actionLastBook"/>
+    <addaction name="separator"/>
+    <addaction name="actionUpload"/>
+    <addaction name="actionBookInfo"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -368,6 +378,8 @@
      <addaction name="actionImportFromFile"/>
      <addaction name="actionImport_from_web"/>
     </widget>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
     <addaction name="menuImport"/>
    </widget>
    <addaction name="menuUrania"/>
@@ -518,6 +530,15 @@
    </property>
    <property name="text">
     <string>Upload</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/star-filled.svg</normaloff>:/images/star-filled.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>
