@@ -43,6 +43,8 @@ SearchResultDialog::~SearchResultDialog()
 
 void SearchResultDialog::setResults(QList<Book> &books)
 {
+    m_books = books;
+
         m_table->setRowCount(books.size());
 
         for (int row = 0; row < books.size(); ++row)
@@ -99,7 +101,9 @@ void SearchResultDialog::setResults(QList<Book> &books)
 void SearchResultDialog::rowDoubleClicked(int row, int column)
 {
    int bookNumber = m_table->item(row, 0)->text().toInt();
-   emit showBook( bookNumber );
+   int bookID = m_books[row].id;
+
+   emit showBook( bookID );
 }
 
 

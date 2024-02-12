@@ -15,12 +15,15 @@ public:
     explicit Library(const QString &database, QObject *parent = nullptr);
 
 
-    QString searchBooks( const QString &text, int type, QList<Book> &books );
+    QString searchBooks( const QString &text, const QString & type, QList<Book> &books );
     bool getBook(int number, Book &book);
+    int getBookById(int id, Book &book);
 
-    int getBookCount();
+    int getBooksCount();
     int getOwnedCount();
     int getReadCount();
+
+    QStringList getCollane();
 
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();
@@ -30,9 +33,11 @@ signals:
 
 public slots:
 
+    void setCollana( const QString & collana );
+
     bool populateDatabase( const QString & path, const QString &basename="urania" );
 
-    bool addBook( const Book &book );
+    bool addBook(  Book &book );
     bool updateBookOwned( int number, bool owned );
     bool updateBookRead(int number, bool read);
     bool updateBookComment( int number, const QString &comment );

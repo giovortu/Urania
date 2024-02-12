@@ -12,6 +12,7 @@ class QLineEdit;
 class QComboBox;
 class StarRating;
 class QSettings;
+class QLabel;
 
 
 QT_BEGIN_NAMESPACE
@@ -56,6 +57,8 @@ public slots:
 
     void loadBook( int index );
 
+    void loadBookById( int id );
+
     void onSearch();
 
     void onStatistics();
@@ -68,9 +71,11 @@ public slots:
 
     void writeSettings();
 
-    void onDatabaseChanged( const QString &txt );
+    void onCollanaChanged( const QString &txt );
 
     void initLibrary();
+
+    void updateView();
 
     void onBookInfo();
 
@@ -78,7 +83,7 @@ protected:
     virtual void closeEvent(QCloseEvent *event) override;
 
 private:
-    int m_currentBook = 1;
+    int m_currentBookNumber = 1;
 
     QString m_currentDatabase;
 
@@ -88,7 +93,7 @@ private:
     QLineEdit *m_search;
 
     QComboBox *m_searchType;
-    QComboBox *m_database;
+    QComboBox *m_collana;
     Library *m_library;
 
     StarRating *m_starRating;
@@ -98,6 +103,12 @@ private:
     QSettings *m_settings;
 
     bool m_safeExit = false;
+
+    QString m_nomeCollana;
+
+    QLabel *m_totalBooks;
+
+    Book m_currentBook;
 };
 
 #endif // MAINWINDOW_H

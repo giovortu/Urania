@@ -37,6 +37,8 @@ private:
     Ui::SearchResultDialog *ui;
 
     QTableWidget *m_table;
+
+    QList<Book> m_books;
 };
 
 #endif // SEARCHRESULTDIALOG_H

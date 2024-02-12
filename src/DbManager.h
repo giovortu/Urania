@@ -14,8 +14,9 @@ class DbManager : public QObject
 public:
     explicit DbManager(const QString &path, QObject *parent = nullptr);
 
-    bool getBook(int number, Book &book);
-    int getBookCount();
+    bool getBook(int number, Book &book, bool global = false);
+    int getBookById(int id, Book &book );
+    int getBooksCount();
 
     int getOwnedCount();
 
@@ -24,13 +25,17 @@ public:
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();
 
-    QString searchBooks(const QString &text, int type, QList<Book> &books);
+    QStringList getCollane();
+
+    void setCollana( const QString & collana );
+
+    QString searchBooks(const QString &text,const QString & type, QList<Book> &books);
 
 public slots:
 
     bool createTables();
 
-    bool addBook( const Book &book );
+    bool addBook(  Book &book );
     bool updateBookOwned( int number, bool owned );
     bool updateBookRead(int number, bool owned);
     bool updateBookComment( int number, const QString &comment );
@@ -53,6 +58,8 @@ private:
     QSqlDatabase m_db;
 
     int m_currentBookCount = -1;
+
+    QString m_collana;
 
 };
 

@@ -21,12 +21,17 @@ bool Library::getBook(int number, Book &book)
 
 }
 
-int Library::getBookCount()
+int Library::getBookById(int id, Book &book)
 {
-    return m_books->getBookCount();
+    return m_books->getBookById( id, book );
 }
 
-QString Library::searchBooks(const QString &text, int type, QList<Book> &books)
+int Library::getBooksCount()
+{
+    return m_books->getBooksCount();
+}
+
+QString Library::searchBooks(const QString &text, const QString & type, QList<Book> &books)
 {
     return m_books->searchBooks( text, type, books );
 }
@@ -41,6 +46,11 @@ int Library::getReadCount()
     return m_books->getReadCount();
 }
 
+QStringList Library::getCollane()
+{
+    return m_books->getCollane();
+}
+
 QList<Book> Library::getOwnedBooks()
 {
     return m_books->getOwnedBooks();
@@ -51,6 +61,11 @@ QList<Book> Library::getReadBooks()
 {
     return m_books->getReadBooks();
 
+}
+
+void Library::setCollana(const QString &collana)
+{
+    m_books->setCollana( collana );
 }
 
 bool Library::populateDatabase(const QString &path, const QString &basename)
@@ -109,7 +124,7 @@ bool Library::populateDatabase(const QString &path, const QString &basename)
     return true;
 }
 
-bool Library::addBook(const Book &book)
+bool Library::addBook( Book &book)
 {
     return m_books->addBook( book );
 }

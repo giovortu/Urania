@@ -26,7 +26,7 @@ bool DbManager::createTables()
 
     QSqlQuery query;
 
-    query.prepare("CREATE TABLE IF NOT EXISTS books(number INTEGER PRIMARY KEY, \
+    query.prepare("CREATE TABLE IF NOT EXISTS books(number INTEGER, \
                   title_ita TEXT, \
                   title_orig TEXT, \
                   author TEXT, \
@@ -40,7 +40,8 @@ bool DbManager::createTables()
                   comment TEXT, \
                   reprint BOOL, \
                   read BOOL, \
-                  collana TEXT );");
+                  collana TEXT, \
+                  id INTEGER, PRIMARY KEY(id));");
 
     if(query.exec())
     {
@@ -55,7 +56,7 @@ bool DbManager::createTables()
     }
 
 
-    query.prepare("CREATE TABLE IF NOT EXISTS indexes(number INTEGER, title TEXT, author TEXT);");
+    query.prepare("CREATE TABLE IF NOT EXISTS indexes(id INTEGER, title TEXT, author TEXT);");
 
     if(query.exec())
     {
@@ -72,7 +73,7 @@ bool DbManager::createTables()
     return success;
 }
 
-bool DbManager::addBook(const Book &book)
+bool DbManager::addBook( Book &book)
 {
     bool success = false;
 
@@ -101,10 +102,31 @@ bool DbManager::addBook(const Book &book)
     {
        success = true;
        m_currentBookCount = -1;
+
+       int id = -1;
+
+       query.prepare("SELECT MAX(id) FROM books;");
+       if(query.exec())
+       {
+           query.next();
+           id = query.value(0).toInt();
+       }
+       else
+       {
+           qDebug() << "add book error:"
+                    << query.lastError();
+           return false;
+       }
+
+       if ( id == -1 )
+           return false;
+
+
        foreach( Index index, book.index )
        {
-           success &= addIndex(book.number, index);
+           success &= addIndex(id, index);
        }
+
     }
     else
     {
@@ -112,6 +134,7 @@ bool DbManager::addBook(const Book &book)
                  << query.lastError();
     }
 
+#if 0
     query.prepare("UPDATE books as b \
                     SET reprint = 1 \
                     WHERE EXISTS ( \
@@ -131,22 +154,22 @@ bool DbManager::addBook(const Book &book)
                  << query.lastError();
     }
 
-
+#endif
 
 
 
     return success;
 }
 
-bool DbManager::updateBookOwned(int number, bool owned)
+bool DbManager::updateBookOwned(int id, bool owned)
 {
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET owned = :owned WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
+    query.prepare("UPDATE books SET owned = :owned WHERE id = :id");
 
 
-    query.bindValue(":number", number - 1);
+    query.bindValue(":id", id );
     query.bindValue(":owned", owned);
 
     if(query.exec())
@@ -161,15 +184,15 @@ bool DbManager::updateBookOwned(int number, bool owned)
     return success;
 }
 
-bool DbManager::updateBookRead(int number, bool read)
+bool DbManager::updateBookRead(int id, bool read)
 {
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET read = :read WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
+    query.prepare("UPDATE books SET read = :read WHERE id =  :id");
 
 
-    query.bindValue(":number", number - 1);
+    query.bindValue(":id", id);
     query.bindValue(":read", read);
 
     if(query.exec())
@@ -184,15 +207,15 @@ bool DbManager::updateBookRead(int number, bool read)
     return success;
 }
 
-bool DbManager::updateBookComment(int number, const QString &comment)
+bool DbManager::updateBookComment(int id, const QString &comment)
 {
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET comment = :comment WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
+    query.prepare("UPDATE books SET comment = :comment WHERE id = :id)");
 
 
-    query.bindValue(":number", number - 1);
+    query.bindValue(":id", id);
     query.bindValue(":comment", comment);
 
     if(query.exec())
@@ -207,15 +230,15 @@ bool DbManager::updateBookComment(int number, const QString &comment)
     return success;
 }
 
-bool DbManager::updateBookStars(int number, int stars)
+bool DbManager::updateBookStars(int id, int stars)
 {
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET stars = :stars WHERE number =  (SELECT  number FROM books ORDER BY number  LIMIT 1 OFFSET :number)");
+    query.prepare("UPDATE books SET stars = :stars WHERE id =  :id");
 
 
-    query.bindValue(":number", number - 1);
+    query.bindValue(":id", id );
     query.bindValue(":stars", stars);
 
     if(query.exec())
@@ -230,15 +253,15 @@ bool DbManager::updateBookStars(int number, int stars)
     return success;
 }
 
-bool DbManager::addIndex(int number, const Index &index)
+bool DbManager::addIndex(int id, const Index &index)
 {
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO indexes (number,title, author) "
-                  "VALUES    (:number,:title,:author)");
+    query.prepare("INSERT OR REPLACE INTO indexes (id,title, author) "
+                  "VALUES    (:id,:title,:author)");
 
-    query.bindValue(":number", number );
+    query.bindValue(":id", id );
     query.bindValue(":title", index.title);
     query.bindValue(":author", index.author);
     if(query.exec())
@@ -261,22 +284,25 @@ QString DbManager::typeToField(int type)
     switch( type )
     {
         case 0:
+            retVal = "number";
+        break;
+        case 1:
             retVal = "title_ita";
         break;
 
-        case 1:
+        case 2:
             retVal = "title_orig";
         break;
 
-        case 2:
+        case 3:
             retVal = "author";
         break;
 
-        case 3:
+        case 4:
             retVal = "date_pub";
         break;
 
-        case 4:
+        case 5:
             retVal = "cover_author";
         break;
 
@@ -289,26 +315,91 @@ QString DbManager::typeToField(int type)
     return retVal;
 }
 
-bool DbManager::getBook(int number, Book &book)
+bool DbManager::getBook(int number, Book &book, bool global)
 {
     bool success = false;
 
+    int id = -1;
 
     QSqlQuery query;
-    query.prepare("SELECT * FROM books ORDER BY number  LIMIT 1 OFFSET :offset");
-    query.bindValue(":offset", number -1);
+
+    if ( global )
+    {
+        query.prepare( QString("SELECT id FROM books ORDER BY id LIMIT 1 OFFSET %2-1 " ).arg( number ));
+
+    }
+    else
+    {
+        query.prepare( QString("SELECT id FROM books where collana = :collana ORDER BY id LIMIT 1 OFFSET %2-1 " ).arg( number ));
+        query.bindValue(":collana", m_collana);
+    }
+
     if(query.exec())
     {
+        if (query.next())
+        {
+            id = query.value( 0 ).toInt();
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-        while (query.next())
+    if ( id == -1 )
+    {
+        return false;
+    }
+
+    return getBookById( id, book ) != -1;
+
+
+}
+
+int DbManager::getBookById(int id, Book &book)
+{
+    int retval = -1;
+
+    QSqlQuery query;
+    query.prepare("SELECT * FROM books WHERE id = :id");
+
+    query.bindValue(":id", id);
+
+    QString collana = "";
+
+    if(query.exec())
+    {
+        if (query.next())
         {
             book= bookFromQuery( query );
 
-            success = true;
+            collana = book.collana;
+
+            query.prepare(QString( "SELECT count(id) FROM books WHERE collana= :collana and id <= %1;").arg(id) );
+            query.bindValue(":collana", book.collana);
+            if(query.exec())
+            {
+                if (query.next())
+                {
+                    retval = query.value(0).toInt();
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            return -1;
         }
 
-        query.prepare("SELECT * FROM indexes WHERE number = (:number)");
-        query.bindValue(":number", book.number);
+        query.prepare("SELECT * FROM indexes WHERE id = (:id)");
+        query.bindValue(":id", id);
         if(query.exec())
         {
             while (query.next())
@@ -331,15 +422,14 @@ bool DbManager::getBook(int number, Book &book)
                  << query.lastError();
     }
 
-
-
-    return success;
+    return retval;
 }
 
-int DbManager::getBookCount()
+int DbManager::getBooksCount()
 {
     QSqlQuery query;
-    query.prepare("SELECT MAX(number) as num_books FROM books");
+    query.prepare("SELECT count(id) as num_books FROM books where collana = :collana");
+    query.bindValue(":collana", m_collana);
     if(query.exec())
     {
         if(query.next())
@@ -356,7 +446,8 @@ int DbManager::getOwnedCount()
 {
 
     QSqlQuery query;
-    query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true");
+    query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true AND collana = (:collana)");
+    query.bindValue(":collana", m_collana);
     if(query.exec())
     {
         if(query.next())
@@ -371,7 +462,8 @@ int DbManager::getOwnedCount()
 int DbManager::getReadCount()
 {
     QSqlQuery query;
-    query.prepare("SELECT count(number) as num_books FROM books WHERE read = true");
+    query.prepare("SELECT count(id) as num_books FROM books WHERE read = true AND collana = :collana");
+    query.bindValue(":collana", m_collana);
     if(query.exec())
     {
         if(query.next())
@@ -387,7 +479,8 @@ QList<Book> DbManager::getOwnedBooks()
 {
     QList<Book> books;
     QSqlQuery query;
-    query.prepare("SELECT * FROM books WHERE owned = true");
+    query.prepare("SELECT * FROM books WHERE owned = true AND collana = :collana");
+    query.bindValue(":collana", m_collana);
     if(query.exec())
     {
         if(query.next())
@@ -408,21 +501,45 @@ QList<Book> DbManager::getReadBooks()
 {
     QList<Book> books;
     QSqlQuery query;
-    query.prepare("SELECT * FROM books WHERE read = true");
+    query.prepare("SELECT * FROM books WHERE read = true AND collana = :collana");
+    query.bindValue(":collana", m_collana);
     if(query.exec())
     {
-        if(query.next())
+        while (query.next())
         {
-            while (query.next())
-            {
-                Book book = bookFromQuery( query );
+            Book book = bookFromQuery( query );
 
-                books.append( book );
-            }
+            books.append( book );
         }
+
     }
 
     return books;
+}
+
+QStringList DbManager::getCollane()
+{
+    QStringList data;
+    QSqlQuery query;
+    query.prepare("select distinct collana from books;");
+    query.bindValue(":collana", m_collana);
+
+    if(query.exec())
+    {
+        while (query.next())
+        {
+            QString collana = query.value( 0 ).toString();
+            data << collana;
+        }
+    }
+
+    return data;
+
+}
+
+void DbManager::setCollana(const QString &collana)
+{
+    m_collana = collana;
 }
 
 Book DbManager::bookFromQuery( QSqlQuery &query )
@@ -432,7 +549,7 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.title_ita =         query.value( query.record().indexOf("title_ita") ).toString();
     book.title_orig =        query.value( query.record().indexOf("title_orig") ).toString();
     book.author =            query.value( query.record().indexOf("author") ).toString();
-    QString date = query.value( query.record().indexOf("date_pub") ).toString();
+    QString date =           query.value( query.record().indexOf("date_pub") ).toString();
     book.date_pub =          QDate::fromString( date, "yyyy-MM-dd" );
     book.cover_author =      query.value( query.record().indexOf("cover_author") ).toString();
     book.cover_image =       query.value( query.record().indexOf("cover_image") ).toByteArray();
@@ -445,29 +562,31 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.read =              query.value( query.record().indexOf("read") ).toBool();
     book.collana =           query.value( query.record().indexOf("collana") ).toString();
     book.editore =           query.value( query.record().indexOf("editore") ).toString();
+    book.id     =            query.value( query.record().indexOf("id") ).toInt();
 
     return book;
 }
 
-QString DbManager::searchBooks(const QString &text, int type, QList<Book> &books)
+QString DbManager::searchBooks(const QString &text, const QString & field, QList<Book> &books)
 {
-    QString field = typeToField( type );
 
     if (!text.isEmpty())
     {
-        QString stQuery = QString("SELECT number FROM books WHERE %1 LIKE '%%2%';").arg( field, text );
+        QString stQuery = QString("SELECT id FROM books WHERE %1 LIKE '%%2%';").arg( field, text );
+
         QSqlQuery query;
         query.prepare( stQuery );
+        //query.bindValue(":collana", m_collana);
 
         if(query.exec())
         {
             books.clear();
             while (query.next())
             {
-                int number = query.value( 0 ).toInt();
+                int id = query.value( 0 ).toInt();
 
                 Book book;
-                if ( getBook(number, book ) )
+                if ( getBook(id, book , true ) )
                 {
                     books.append( book );
                 }

@@ -13,13 +13,15 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 INCLUDEPATH += $$PWD/src $$PWD/libs/tidy/include
-
+win32 {
 #LIBS+=$$PWD/libs/tidy/tidy.dll
-#LIBS+=$$PWD/libs/tidy/tidy_static.lib
+LIBS+=$$PWD/libs/tidy/tidy_static.lib
+
+}
 
 
 include( $$PWD/src/settings/settings.pri )
-include( $$PWD/src/tidy-html5/tidy-html5.pri )
+#include( $$PWD/src/tidy-html5/tidy-html5.pri )
 
 
 SOURCES +=  $$PWD/main.cpp \

@@ -76,6 +76,8 @@ public:
     //support
     QString cover_image_path;
 
+    int id;
+
 
 
 
