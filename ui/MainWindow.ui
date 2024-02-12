@@ -58,6 +58,83 @@
        <enum>QFrame::Raised</enum>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
+       <item row="7" column="1">
+        <widget class="QLabel" name="editore">
+         <property name="text">
+          <string>Editore</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="CopyableLabel" name="title_orig">
+         <property name="text">
+          <string>N/A</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="CopyableLabel" name="author">
+         <property name="text">
+          <string>N/A</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="CopyableLabel" name="title_ita">
+         <property name="text">
+          <string>N/A</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="CopyableLabel" name="number">
+         <property name="text">
+          <string>N/A</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0" colspan="2">
+        <widget class="QTextEdit" name="comment">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>100</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QPushButton" name="saveComments">
+         <property name="text">
+          <string>Save</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="CopyableLabel" name="date_pub">
+         <property name="text">
+          <string>N/A</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="1">
         <widget class="QCheckBox" name="reprint">
          <property name="enabled">
@@ -68,10 +145,61 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="1">
-        <widget class="QLabel" name="collana">
+       <item row="15" column="0" colspan="2">
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>551</width>
+            <height>251</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <layout class="QGridLayout" name="indexLayout" rowstretch="0" columnstretch="0" rowminimumheight="0" columnminimumwidth="0">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <property name="spacing">
+              <number>5</number>
+             </property>
+            </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QCheckBox" name="read">
          <property name="text">
-          <string/>
+          <string>Letto</string>
          </property>
         </widget>
        </item>
@@ -82,6 +210,19 @@
          </property>
          <property name="wordWrap">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="0" colspan="2">
+        <widget class="Line" name="line">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>5</height>
+          </size>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -133,50 +274,20 @@
          </item>
         </layout>
        </item>
-       <item row="1" column="0">
-        <widget class="CopyableLabel" name="date_pub">
+       <item row="6" column="1">
+        <widget class="QLabel" name="collana">
          <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+          <string>Collana</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
-        <widget class="QCheckBox" name="read">
-         <property name="text">
-          <string>Letto</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="CopyableLabel" name="author">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <widget class="QLabel" name="label">
          <property name="text">
           <string>Indice</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="CopyableLabel" name="title_ita">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -187,94 +298,42 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="CopyableLabel" name="title_orig">
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>N/A</string>
+          <string>Commenti</string>
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="2">
-        <widget class="QScrollArea" name="scrollArea">
-         <property name="widgetResizable">
-          <bool>true</bool>
+       <item row="11" column="0">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_2">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>503</width>
-            <height>325</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <item>
-            <layout class="QGridLayout" name="indexLayout" rowstretch="0" columnstretch="0" rowminimumheight="0" columnminimumwidth="0">
-             <property name="leftMargin">
-              <number>5</number>
-             </property>
-             <property name="topMargin">
-              <number>5</number>
-             </property>
-             <property name="rightMargin">
-              <number>5</number>
-             </property>
-             <property name="bottomMargin">
-              <number>5</number>
-             </property>
-             <property name="spacing">
-              <number>5</number>
-             </property>
-            </layout>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="CopyableLabel" name="number">
-         <property name="text">
-          <string>N/A</string>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
          </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
+        </spacer>
        </item>
        <item row="8" column="0" colspan="2">
-        <widget class="QTextEdit" name="comment">
+        <widget class="Line" name="line_2">
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>100</height>
+           <height>5</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>100</height>
+           <height>5</height>
           </size>
          </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QLabel" name="editore">
-         <property name="text">
-          <string/>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -471,8 +530,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../res/img/img.qrc"/>
   <include location="../res/qdarkstyle/qdarkstyle.qrc"/>
+  <include location="../res/img/img.qrc"/>
  </resources>
  <connections/>
 </ui>

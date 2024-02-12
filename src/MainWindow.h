@@ -51,6 +51,7 @@ public slots:
     void onReadChanged( bool );
 
     void onRatingChanged(qreal rating);
+    void onSaveComments();
 
     void onImportFromFile( );
     void onImportFromWeb( );

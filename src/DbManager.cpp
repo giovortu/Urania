@@ -212,7 +212,7 @@ bool DbManager::updateBookComment(int id, const QString &comment)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET comment = :comment WHERE id = :id)");
+    query.prepare("UPDATE books SET comment = :comment WHERE id = :id;");
 
 
     query.bindValue(":id", id);

@@ -107,6 +107,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( m_starRating, &StarRating::ratingChanged, this, &MainWindow::onRatingChanged );
 
+    connect( ui->saveComments, &QPushButton::clicked, this, &MainWindow::onSaveComments );
+
 
     auto lay = qobject_cast<QGridLayout*>(ui->frame->layout());
 
@@ -594,6 +596,15 @@ void MainWindow::onRatingChanged(qreal rating)
     m_library->updateBookStars( m_currentBook.id, (int)( roundToHalf( rating ) * 10 ));
 }
 
+void MainWindow::onSaveComments()
+{
+    m_currentBook.comment = ui->comment->toPlainText();
+
+    m_library->updateBookComment( m_currentBook.id, ui->comment->toPlainText() );
+}
+
+
+
 void MainWindow::onImportFromFile()
 {
     QString file = QFileDialog::getOpenFileName( this, "Load from HTML", "", "HTML files (*.htm)" );
@@ -672,9 +683,15 @@ void MainWindow::onImportFromWeb()
                             Book book;
                             book.fromHTML( fileName );
 
-                            m_library->addBook( book );
+                            BookEditor editor( this );
+                            editor.setBook( &book );
 
-                            m_currentBook = book;
+                            if ( editor.exec() )
+                            {
+                                m_library->addBook( book );
+                                m_currentBook = book;
+                                viewBook( book );
+                            }
 
 
                        }
