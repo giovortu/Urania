@@ -26,6 +26,8 @@ public:
     QList<Book> getReadBooks();
 
     QStringList getCollane();
+    QStringList getEditors();
+
 
     void setCollana( const QString & collana );
 

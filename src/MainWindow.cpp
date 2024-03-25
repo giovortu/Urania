@@ -503,7 +503,7 @@ void MainWindow::onStatistics()
 
 void MainWindow::onNewBook()
 {
-    auto editor = new BookEditor( this );
+    auto editor = new BookEditor( m_library, this );
 
     Book book;
 
@@ -638,6 +638,8 @@ void MainWindow::onImportFromFile()
     QString file = QFileDialog::getOpenFileName( this, "Load from HTML", "", "HTML files (*.htm)" );
 
     qDebug() << file ;
+
+    parseHTML( file );
  }
 
 void MainWindow::onImportFromWeb()
@@ -650,7 +652,10 @@ void MainWindow::onImportFromWeb()
     auto manager = new QNetworkAccessManager(this);
 
     // Send an HTTP GET request to the URL
-    manager->get(QNetworkRequest(url));
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+    manager->get( request );
 
     // Connect a slot to handle the reply when it is ready
     QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
@@ -691,7 +696,10 @@ void MainWindow::onImportFromWeb()
 
                    auto manager = new QNetworkAccessManager(this);
 
-                   manager->get(QNetworkRequest(imgUrl));
+                   QNetworkRequest request(imgUrl);
+                   request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+                   manager->get( request );
 
                    // Connect a slot to handle the reply when it is ready
                    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
@@ -711,7 +719,7 @@ void MainWindow::onImportFromWeb()
                             Book book;
                             book.fromHTML( fileName );
 
-                            BookEditor editor( this );
+                            BookEditor editor( m_library, this );
                             editor.setBook( &book );
 
                             if ( editor.exec() )
@@ -744,7 +752,25 @@ void MainWindow::onImportFromWeb()
 }
 
 
+bool MainWindow::parseHTML( const QString & fileName )
+{
 
+
+     Book book;
+     book.fromHTML( fileName );
+
+     BookEditor editor( m_library, this );
+     editor.setBook( &book );
+
+     if ( editor.exec() )
+     {
+         m_library->addBook( book );
+         m_currentBook = book;
+         viewBook( book );
+     }
+
+     return true;
+}
 
 
 

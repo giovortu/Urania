@@ -24,6 +24,7 @@ public:
     int getReadCount();
 
     QStringList getCollane();
+    QStringList getEditors();
 
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();

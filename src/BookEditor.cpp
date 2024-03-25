@@ -1,12 +1,15 @@
 #include <QFileDialog>
 #include <QFile>
 
+#include "Library.h"
 #include "BookEditor.h"
 #include "Book.h"
 
-BookEditor::BookEditor(QWidget* parent) : QDialog(parent)
+BookEditor::BookEditor(Library *library, QWidget* parent) : QDialog(parent),m_library(library)
+
 {
     ui.setupUi(this);
+
 
     // Connect the Save button's clicked signal to the slot that saves the data
     connect(ui.saveButton, &QPushButton::clicked, this, &BookEditor::saveData);
@@ -14,6 +17,20 @@ BookEditor::BookEditor(QWidget* parent) : QDialog(parent)
     connect(ui.coverButton, &QPushButton::clicked, this, &BookEditor::loadCover);
 
     connect( ui.closeButton, &QPushButton::clicked, this, &BookEditor::reject );
+
+
+    QStringList collane = m_library->getCollane();
+    foreach( QString collana, collane )
+    {
+        ui.collanaCombo->addItem(collana);
+    }
+
+    QStringList editors = m_library->getEditors();
+    foreach( QString editor, editors )
+    {
+        ui.editorCombo->addItem(editor);
+    }
+
 
 }
 
@@ -35,10 +52,10 @@ void BookEditor::setBook( Book *book)
     ui.commentEdit->setText(book->comment);
     ui.reprintCheckbox->setChecked(book->reprint);
     ui.readCheckbox->setChecked(book->read);
-    ui.collanaEdit->setText(book->collana);
-    ui.editoreEdit->setText(book->editore);
+    ui.collanaCombo->setCurrentText(book->collana);
+    ui.editorCombo->setCurrentText(book->editore);
 
-    // Connect additional signals and slots to update Book object's attributes
+
 }
 
 void BookEditor::saveData()
@@ -55,8 +72,8 @@ void BookEditor::saveData()
     book->comment = ui.commentEdit->toPlainText();
     book->reprint = ui.reprintCheckbox->isChecked();
     book->read = ui.readCheckbox->isChecked();
-    book->collana = ui.collanaEdit->text();
-    book->editore = ui.editoreEdit->text();
+    book->collana = ui.collanaCombo->currentText();
+    book->editore = ui.editorCombo->currentText();
 
 
     accept();

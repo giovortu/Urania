@@ -82,6 +82,8 @@ public slots:
 
     void onBookInfo();
 
+    bool parseHTML( const QString & filename );
+
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 

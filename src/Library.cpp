@@ -51,6 +51,11 @@ QStringList Library::getCollane()
     return m_books->getCollane();
 }
 
+QStringList Library::getEditors()
+{
+    return m_books->getEditors();
+}
+
 QList<Book> Library::getOwnedBooks()
 {
     return m_books->getOwnedBooks();

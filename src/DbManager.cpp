@@ -522,7 +522,6 @@ QStringList DbManager::getCollane()
     QStringList data;
     QSqlQuery query;
     query.prepare("select distinct collana from books;");
-    query.bindValue(":collana", m_collana);
 
     if(query.exec())
     {
@@ -535,6 +534,24 @@ QStringList DbManager::getCollane()
 
     return data;
 
+}
+
+QStringList DbManager::getEditors()
+{
+    QStringList data;
+    QSqlQuery query;
+    query.prepare("select distinct editore from books;");
+
+    if(query.exec())
+    {
+        while (query.next())
+        {
+            QString collana = query.value( 0 ).toString();
+            data << collana;
+        }
+    }
+
+    return data;
 }
 
 void DbManager::setCollana(const QString &collana)

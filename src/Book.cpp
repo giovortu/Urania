@@ -298,6 +298,7 @@ bool Book::fromHTML(const QString &path)
 
             QDomDocument doc;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             QDomDocument::ParseResult res = doc.setContent( converted );
 
 
@@ -307,6 +308,17 @@ bool Book::fromHTML(const QString &path)
 
                 return false;
             }
+#else
+            bool res = doc.setContent( converted );
+
+
+            if (!res) {
+
+                qDebug() << "Failed to parse the HTML content.";
+
+                return false;
+            }
+#endif
 
             int currentTable = 0;
 
