@@ -17,11 +17,15 @@ win32 {
 #LIBS+=$$PWD/libs/tidy/tidy.dll
 LIBS+=$$PWD/libs/tidy/tidy_static.lib
 
+} else {
+
+include( $$PWD/src/tidy-html5/tidy-html5.pri )
+
 }
 
 
 include( $$PWD/src/settings/settings.pri )
-#include( $$PWD/src/tidy-html5/tidy-html5.pri )
+
 
 
 SOURCES +=  $$PWD/main.cpp \

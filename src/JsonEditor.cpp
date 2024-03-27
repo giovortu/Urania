@@ -1,4 +1,4 @@
-#include "jsoneditor.h"
+#include "JsonEditor.h"
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
