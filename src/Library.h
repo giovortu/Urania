@@ -19,9 +19,10 @@ public:
     bool getBook(int number, Book &book);
     int getBookById(int id, Book &book);
 
-    int getBooksCount();
-    int getOwnedCount();
-    int getReadCount();
+    int getBooksCount( bool global = false  );
+    int getOwnedCount(bool global = false  );
+    int getReadCount(bool global = false );
+    int getDigitalCount(bool global = false );
 
     QStringList getCollane();
     QStringList getEditors();
@@ -43,6 +44,7 @@ public slots:
     bool updateBookRead(int number, bool read);
     bool updateBookComment( int number, const QString &comment );
     bool updateBookStars( int number, int stars );
+    bool updateBookIsDigital(int id, bool digital);
 
 protected:
     DbManager *m_books;

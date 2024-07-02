@@ -68,6 +68,8 @@ public:
     bool reprint;
     bool read;
 
+    bool isDigital;
+
     QString isbn;
 
     QString collana;

@@ -16,11 +16,11 @@ public:
 
     bool getBook(int number, Book &book, bool global = false);
     int getBookById(int id, Book &book );
-    int getBooksCount();
 
-    int getOwnedCount();
-
-    int getReadCount();
+    int getBooksCount( bool global = false );
+    int getOwnedCount( bool global = false);
+    int getReadCount( bool global = false);
+    int getDigitalCount(bool global = false);
 
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();
@@ -42,6 +42,9 @@ public slots:
     bool updateBookRead(int number, bool owned);
     bool updateBookComment( int number, const QString &comment );
     bool updateBookStars( int number, int stars );
+    bool updateBookIsDigital( int number, bool digital );
+
+
 
     bool addIndex( int number, const Index &index );
 

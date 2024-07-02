@@ -78,11 +78,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_searchType = new QComboBox( this );
     m_searchType->addItem( "Numero" , "number");
+    m_searchType->addItem( "Digitale" , "digital");
     m_searchType->addItem( "Titolo" , "title_ita");
     m_searchType->addItem( "Titolo originale" , "title_orig");
     m_searchType->addItem( "Autore", "author" );
     m_searchType->addItem( "Data pubblicazione", "date_pub" );
     m_searchType->addItem( "Autore cover", "cover_author" );
+
+    m_searchType->setCurrentText("Titolo");
 
     ui->toolBar->insertWidget(ui->actionSearch, m_searchType);
 
@@ -108,6 +111,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     connect( m_starRating, &StarRating::ratingChanged, this, &MainWindow::onRatingChanged );
+
+    connect( ui->isDigital, &QCheckBox::clicked, this, &MainWindow::onIsDigitalChanged );
 
     auto saveComments = new QPushButton( this );
     saveComments->setText(tr("Save Comments"));
@@ -324,6 +329,7 @@ void MainWindow::viewBook(Book &book)
 
     ui->owned->setChecked( book.owned );
     ui->read->setChecked( book.read );
+    ui->isDigital->setChecked( book.isDigital );
 
     while (QLayoutItem* item =  ui->indexLayout->takeAt(0)) {
           if (QWidget* widget = item->widget()) {
@@ -478,7 +484,7 @@ void MainWindow::onSearch()
 
         connect( dialog, &SearchResultDialog::showBook, this, &MainWindow::loadBookById );
 
-        dialog->show();
+        dialog->showMaximized();
     }
 }
 
@@ -487,6 +493,12 @@ void MainWindow::onStatistics()
     int numBooks = m_library->getBooksCount();
     int numOwned = m_library->getOwnedCount();
     int numRead = m_library->getReadCount();
+    int numDigital = m_library->getDigitalCount();
+
+    int numBooksG = m_library->getBooksCount(true);
+    int numOwnedG = m_library->getOwnedCount(true);
+    int numReadG = m_library->getReadCount(true);
+    int numDigitalG = m_library->getDigitalCount(true);
 
     Statistics dialog;
 
@@ -495,6 +507,12 @@ void MainWindow::onStatistics()
     dialog.setNumBooks( numBooks );
     dialog.setOwnedBooks( numOwned );
     dialog.setReadBooks( numRead );
+    dialog.setNumDigital( numDigital );
+
+    dialog.setAllNumBooks( numBooksG );
+    dialog.setAllOwnedBooks( numOwnedG );
+    dialog.setAllReadBooks( numReadG );
+    dialog.setAllNumDigital( numDigitalG );
 
     dialog.exec();
 
@@ -517,7 +535,9 @@ void MainWindow::onNewBook()
         m_library->addBook( book );
         m_currentBookNumber = book.id;
         m_currentBook = book;
+        initLibrary();
         viewBook( m_currentBook );
+
     }
 
 
@@ -622,6 +642,11 @@ void MainWindow::onReadChanged(bool)
 void MainWindow::onRatingChanged(qreal rating)
 {
     m_library->updateBookStars( m_currentBook.id, (int)( roundToHalf( rating ) * 10 ));
+}
+
+void MainWindow::onIsDigitalChanged( bool )
+{
+    m_library->updateBookIsDigital( m_currentBook.id, ui->isDigital->isChecked() );
 }
 
 void MainWindow::onSaveComments()

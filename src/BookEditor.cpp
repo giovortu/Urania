@@ -1,4 +1,5 @@
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QFile>
 
 #include "Library.h"
@@ -18,12 +19,10 @@ BookEditor::BookEditor(Library *library, QWidget* parent) : QDialog(parent),m_li
 
     connect( ui.closeButton, &QPushButton::clicked, this, &BookEditor::reject );
 
+    connect( ui.addCollanaButton, &QPushButton::clicked, this, &BookEditor::addCollana );
 
-    QStringList collane = m_library->getCollane();
-    foreach( QString collana, collane )
-    {
-        ui.collanaCombo->addItem(collana);
-    }
+
+    populateCollana();
 
     QStringList editors = m_library->getEditors();
     foreach( QString editor, editors )
@@ -55,6 +54,8 @@ void BookEditor::setBook( Book *book)
     ui.collanaCombo->setCurrentText(book->collana);
     ui.editorCombo->setCurrentText(book->editore);
 
+    ui.isDigitalCheck->setChecked( book->isDigital );
+
 
 }
 
@@ -75,6 +76,7 @@ void BookEditor::saveData()
     book->collana = ui.collanaCombo->currentText();
     book->editore = ui.editorCombo->currentText();
 
+    book->isDigital = ui.isDigitalCheck->isChecked();
 
     accept();
 
@@ -98,4 +100,25 @@ void BookEditor::loadCover()
 
     }
 
+}
+
+void BookEditor::addCollana()
+{
+    QString newCollana = QInputDialog::getText(this, tr("New Collana"), tr("Collana name:"));
+    if ( !newCollana.isEmpty() )
+    {
+        populateCollana();
+        ui.collanaCombo->addItem( newCollana );
+        ui.collanaCombo->setCurrentText( newCollana );
+    }
+}
+
+void BookEditor::populateCollana()
+{
+    ui.collanaCombo->clear();
+    QStringList collane = m_library->getCollane();
+    foreach( QString collana, collane )
+    {
+        ui.collanaCombo->addItem(collana);
+    }
 }

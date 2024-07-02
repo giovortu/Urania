@@ -20,8 +20,12 @@ public slots:
     void setNumBooks( int num );
     void setOwnedBooks( int num );
     void setReadBooks( int num );
+    void setNumDigital( int num );
 
-
+    void setAllNumBooks( int num );
+    void setAllOwnedBooks( int num );
+    void setAllReadBooks( int num );
+    void setAllNumDigital( int num );
 
 private:
     Ui::Statistics *ui;

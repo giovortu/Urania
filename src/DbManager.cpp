@@ -40,6 +40,7 @@ bool DbManager::createTables()
                   comment TEXT, \
                   reprint BOOL, \
                   read BOOL, \
+                  digital BOOL, \
                   collana TEXT, \
                   id INTEGER, PRIMARY KEY(id));");
 
@@ -78,8 +79,8 @@ bool DbManager::addBook( Book &book)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana,editore) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana,:editore)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana,editore,digital) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana,:editore,:digital)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -96,6 +97,7 @@ bool DbManager::addBook( Book &book)
     query.bindValue(":read", book.read);
     query.bindValue(":collana", book.collana);
     query.bindValue(":editore", book.editore);
+    query.bindValue(":digital", book.isDigital);
 
 
     if(query.exec())
@@ -248,6 +250,29 @@ bool DbManager::updateBookStars(int id, int stars)
     else
     {
         qDebug() << "update stars:"
+                 << query.lastError();
+    }
+    return success;
+}
+
+bool DbManager::updateBookIsDigital(int id, bool digital)
+{
+    bool success = false;
+
+    QSqlQuery query;
+    query.prepare("UPDATE books SET digital = :digital WHERE id =  :id");
+
+
+    query.bindValue(":id", id );
+    query.bindValue(":digital", digital);
+
+    if(query.exec())
+    {
+        success = true;
+    }
+    else
+    {
+        qDebug() << "update digital:"
                  << query.lastError();
     }
     return success;
@@ -425,11 +450,18 @@ int DbManager::getBookById(int id, Book &book)
     return retval;
 }
 
-int DbManager::getBooksCount()
+int DbManager::getBooksCount(bool global )
 {
     QSqlQuery query;
-    query.prepare("SELECT count(id) as num_books FROM books where collana = :collana");
-    query.bindValue(":collana", m_collana);
+    if ( global )
+    {
+        query.prepare("SELECT count(number) as num_books FROM books");
+    }
+    else
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE collana = (:collana)");
+        query.bindValue(":collana", m_collana);
+    }
     if(query.exec())
     {
         if(query.next())
@@ -442,12 +474,19 @@ int DbManager::getBooksCount()
     return m_currentBookCount;
 }
 
-int DbManager::getOwnedCount()
+int DbManager::getOwnedCount(bool global )
 {
 
     QSqlQuery query;
-    query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true AND collana = (:collana)");
-    query.bindValue(":collana", m_collana);
+    if ( global )
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true");
+    }
+    else
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true AND collana = (:collana)");
+        query.bindValue(":collana", m_collana);
+    }
     if(query.exec())
     {
         if(query.next())
@@ -459,11 +498,41 @@ int DbManager::getOwnedCount()
     return 0;
 }
 
-int DbManager::getReadCount()
+int DbManager::getReadCount(bool global )
 {
     QSqlQuery query;
-    query.prepare("SELECT count(id) as num_books FROM books WHERE read = true AND collana = :collana");
-    query.bindValue(":collana", m_collana);
+    if ( global )
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE read = true");
+    }
+    else
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE read = true AND collana = (:collana)");
+        query.bindValue(":collana", m_collana);
+    }
+    if(query.exec())
+    {
+        if(query.next())
+        {
+            return  query.value( 0 ).toInt();
+        }
+    }
+
+    return 0;
+}
+
+int DbManager::getDigitalCount(bool global )
+{
+    QSqlQuery query;
+    if ( global )
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE digital = true");
+    }
+    else
+    {
+        query.prepare("SELECT count(number) as num_books FROM books WHERE digital = true AND collana = (:collana)");
+        query.bindValue(":collana", m_collana);
+    }
     if(query.exec())
     {
         if(query.next())
@@ -581,35 +650,46 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.editore =           query.value( query.record().indexOf("editore") ).toString();
     book.id     =            query.value( query.record().indexOf("id") ).toInt();
 
+    book.isDigital=          query.value( query.record().indexOf("digital") ).toBool();
+
     return book;
 }
 
 QString DbManager::searchBooks(const QString &text, const QString & field, QList<Book> &books)
 {
+    QString _text = text;
 
-    if (!text.isEmpty())
+    if ( field == "digital" )
     {
-        QString stQuery = QString("SELECT id FROM books WHERE %1 LIKE '%%2%';").arg( field, text );
+        _text = "1";
+    }
 
-        QSqlQuery query;
-        query.prepare( stQuery );
-        //query.bindValue(":collana", m_collana);
+    if ( _text.isEmpty() )
+    {
+        return field;
+    }
 
-        if(query.exec())
+    QString stQuery = QString("SELECT id FROM books WHERE %1 LIKE '%%2%';").arg( field, _text );
+
+    QSqlQuery query;
+    query.prepare( stQuery );
+    //query.bindValue(":collana", m_collana);
+
+    if(query.exec())
+    {
+        books.clear();
+        while (query.next())
         {
-            books.clear();
-            while (query.next())
-            {
-                int id = query.value( 0 ).toInt();
+            int id = query.value( 0 ).toInt();
 
-                Book book;
-                if ( getBook(id, book , true ) )
-                {
-                    books.append( book );
-                }
+            Book book;
+            if ( getBookById(id, book ) )
+            {
+                books.append( book );
             }
         }
     }
+
 
     return field;
 }

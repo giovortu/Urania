@@ -27,6 +27,10 @@ private slots:
 
     void loadCover();
 
+    void addCollana();
+
+    void populateCollana();
+
 private:
     Ui::BookEditor ui;  // Generated UI object
     Book* book = nullptr;         // The Book object being edited

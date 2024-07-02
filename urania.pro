@@ -67,15 +67,11 @@ FORMS += \
 RESOURCES+= $$PWD/res/qdarkstyle/qdarkstyle.qrc \
             $$PWD/res/img/img.qrc
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
 
 win32 {
 
 RC_FILE = $$PWD/res/urania.rc
 
+QMAKE_POST_LINK +=  $$QTPATH/windeployqt.exe --dir $${DESTDIR} $${DESTDIR}/$${TARGET}.exe
+
 }
-
-

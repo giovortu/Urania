@@ -26,9 +26,9 @@ int Library::getBookById(int id, Book &book)
     return m_books->getBookById( id, book );
 }
 
-int Library::getBooksCount()
+int Library::getBooksCount(bool global )
 {
-    return m_books->getBooksCount();
+    return m_books->getBooksCount( global );
 }
 
 QString Library::searchBooks(const QString &text, const QString & type, QList<Book> &books)
@@ -36,14 +36,19 @@ QString Library::searchBooks(const QString &text, const QString & type, QList<Bo
     return m_books->searchBooks( text, type, books );
 }
 
-int Library::getOwnedCount()
+int Library::getOwnedCount(bool global )
 {
-    return m_books->getOwnedCount();
+    return m_books->getOwnedCount(global);
 }
 
-int Library::getReadCount()
+int Library::getReadCount(bool global )
 {
-    return m_books->getReadCount();
+    return m_books->getReadCount(global);
+}
+
+int Library::getDigitalCount(bool global )
+{
+    return m_books->getDigitalCount(global);
 }
 
 QStringList Library::getCollane()
@@ -156,5 +161,10 @@ bool Library::updateBookStars(int number, int stars)
 {
     return m_books->updateBookStars( number, stars );
 
+}
+
+bool Library::updateBookIsDigital(int id, bool digital)
+{
+    return m_books->updateBookIsDigital( id, digital );
 }
 
