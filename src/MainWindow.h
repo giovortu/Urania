@@ -29,7 +29,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+
+    void ready();
+
 public slots:
+
+    void init();
 
     void onSettings();
 

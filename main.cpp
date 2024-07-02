@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QApplication>
+#include <QSplashScreen>
 
 #include "Library.h"
 #include "OwnCloudUploader.h"
@@ -16,9 +17,16 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-#if 1
 
-    MainWindow w;
+    auto splash = new QSplashScreen(QPixmap( ":/images/splash.png") );
+
+    splash->showMessage("Starting...", Qt::AlignBottom | Qt::AlignHCenter, Qt::white);
+    splash->show();
+
+
+    auto mainWin  = new MainWindow;
+
+    QObject::connect( mainWin, &MainWindow::ready, splash, &QSplashScreen::close);
 
     QFile f(":/qdarkstyle/style.css");
 
@@ -35,35 +43,9 @@ int main(int argc, char *argv[])
         f.close();
     }
 
+    mainWin->init();
 
-    w.show();
-#else
-
-    OwnCloudUploader uploader;
-
-    QObject::connect( &uploader, &OwnCloudUploader::uploadProgress, [](int progress, int total) {
-        qDebug() << "Progress: " << progress << " / " << total;
-    });
-
-
-    QString path = QApplication::applicationDirPath() + "/database/";
-
-    QDir dir(path);
-    QFileInfoList list = dir.entryInfoList();
-
-    foreach( QFileInfo info, list )
-    {
-        if (info.isFile())
-        {
-            QString fileName = path + info.fileName();
-            qDebug() << "Uploading " << info.fileName();
-            uploader.enqueueUpload(fileName, "/Urania");
-        }
-    }
-
-
-
-#endif
+    mainWin->show();
 
     return a.exec();
 

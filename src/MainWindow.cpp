@@ -39,6 +39,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_settings = sett->settings();
 
+}
+
+void MainWindow::init()
+{
+
 
     m_collana = new QComboBox( this );
 
@@ -154,6 +159,8 @@ MainWindow::MainWindow(QWidget *parent)
     readSettings();
 
     initLibrary();
+
+    emit ready();
 
 
 }
