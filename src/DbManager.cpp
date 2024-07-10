@@ -46,7 +46,7 @@ bool DbManager::createTables()
 
     if(query.exec())
     {
-       qDebug() << "Database BOOKS created";
+       qDebug() << "Database BOOKS created / updated";
        success = true;
        m_currentBookCount = -1;
     }
@@ -61,7 +61,7 @@ bool DbManager::createTables()
 
     if(query.exec())
     {
-        qDebug() << "Database INDEXES created";
+        qDebug() << "Database INDEXES created / updated";
         success &= true;
         m_currentBookCount = -1;
      }

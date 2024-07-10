@@ -20,15 +20,15 @@ BookEditor::BookEditor(Library *library, QWidget* parent) : QDialog(parent),m_li
     connect( ui.closeButton, &QPushButton::clicked, this, &BookEditor::reject );
 
     connect( ui.addCollanaButton, &QPushButton::clicked, this, &BookEditor::addCollana );
+    connect( ui.addEditorButton, &QPushButton::clicked, this, &BookEditor::addEditor );
+
+
+
 
 
     populateCollana();
+    populateEditors();
 
-    QStringList editors = m_library->getEditors();
-    foreach( QString editor, editors )
-    {
-        ui.editorCombo->addItem(editor);
-    }
 
 
 }
@@ -113,6 +113,17 @@ void BookEditor::addCollana()
     }
 }
 
+void BookEditor::addEditor()
+{
+    QString newEditor = QInputDialog::getText(this, tr("New editor"), tr("Editor name:"));
+    if ( !newEditor.isEmpty() )
+    {
+        populateEditors();
+        ui.editorCombo->addItem( newEditor );
+        ui.editorCombo->setCurrentText( newEditor );
+    }
+}
+
 void BookEditor::populateCollana()
 {
     ui.collanaCombo->clear();
@@ -120,5 +131,15 @@ void BookEditor::populateCollana()
     foreach( QString collana, collane )
     {
         ui.collanaCombo->addItem(collana);
+    }
+}
+
+void BookEditor::populateEditors()
+{
+    ui.editorCombo->clear();
+    QStringList editors = m_library->getEditors();
+    foreach( QString editor, editors )
+    {
+        ui.editorCombo->addItem(editor);
     }
 }

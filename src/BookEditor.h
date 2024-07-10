@@ -28,8 +28,10 @@ private slots:
     void loadCover();
 
     void addCollana();
+    void addEditor();
 
     void populateCollana();
+    void populateEditors();
 
 private:
     Ui::BookEditor ui;  // Generated UI object
