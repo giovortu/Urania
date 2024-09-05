@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DatabaseUploader</class>
- <widget class="QWidget" name="DatabaseUploader">
+ <class>RemoteDatabaseManager</class>
+ <widget class="QWidget" name="RemoteDatabaseManager">
   <property name="geometry">
    <rect>
     <x>0</x>

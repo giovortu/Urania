@@ -28,6 +28,10 @@ public:
     QStringList getCollane();
     QStringList getEditors();
 
+    void reopen();
+    void open( const QString &newDB );
+    void close();
+
 
     void setCollana( const QString & collana );
 
@@ -65,6 +69,8 @@ private:
     int m_currentBookCount = -1;
 
     QString m_collana;
+
+    QString m_dbFile;
 
 };
 

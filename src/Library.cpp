@@ -11,8 +11,21 @@ Library::Library(const QString &database,QObject *parent)
 
     m_books->createTables();
 
-   // populateDatabase( "C:/Users/giovortu/Downloads/Urania/www.mondourania.com/urania/" );
+}
 
+void Library::reopen()
+{
+    m_books->reopen();
+}
+
+void Library::open(const QString &newDB)
+{
+    m_books->open( newDB );
+}
+
+void Library::close()
+{
+    m_books->close();
 }
 
 bool Library::getBook(int number, Book &book)

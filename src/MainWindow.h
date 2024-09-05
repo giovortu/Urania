@@ -77,6 +77,7 @@ public slots:
     void onNewBook();
 
     void onUpload();
+    void onDownload();
 
     void readSettings();
 

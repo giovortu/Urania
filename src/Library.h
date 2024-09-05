@@ -14,6 +14,9 @@ class Library : public QObject
 public:
     explicit Library(const QString &database, QObject *parent = nullptr);
 
+    void reopen();
+    void open( const QString &newDB );
+    void close();
 
     QString searchBooks( const QString &text, const QString & type, QList<Book> &books );
     bool getBook(int number, Book &book);

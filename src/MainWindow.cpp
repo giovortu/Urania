@@ -19,7 +19,7 @@
 #include "BookInfo.h"
 #include "JsonFormWidget.h"
 #include "BookEditor.h"
-#include "DatabaseUploader.h"
+#include "RemoteDatabaseManager.h"
 #include "JsonEditor.h"
 
 qreal roundToHalf(qreal value) {
@@ -154,6 +154,9 @@ void MainWindow::init()
     connect( ui->actionNewBook, &QAction::triggered, this, &MainWindow::onNewBook );
 
     connect( ui->actionUpload, &QAction::triggered, this, &MainWindow::onUpload );
+    connect( ui->actionDownload, &QAction::triggered, this, &MainWindow::onDownload );
+
+
 
 
     readSettings();
@@ -552,7 +555,7 @@ void MainWindow::onNewBook()
 
 void MainWindow::onUpload()
 {
-    auto uploader = new DatabaseUploader( nullptr );
+    auto uploader = new RemoteDatabaseManager( nullptr );
     uploader->show();
 
     uploader->startUpload();
@@ -560,6 +563,23 @@ void MainWindow::onUpload()
 
 
 }
+
+void MainWindow::onDownload()
+{
+
+    auto uploader = new RemoteDatabaseManager( nullptr );
+    uploader->show();
+
+    m_library->close();
+
+    uploader->startDownload();
+
+    connect( uploader, &RemoteDatabaseManager::finished, this, &MainWindow::initLibrary );
+
+
+
+}
+
 
 void MainWindow::readSettings()
 {
@@ -750,6 +770,9 @@ void MainWindow::onImportFromWeb()
 
                             Book book;
                             book.fromHTML( fileName );
+
+                            qWarning() << m_nomeCollana;
+                            book.collana = m_nomeCollana;
 
                             BookEditor editor( m_library, this );
                             editor.setBook( &book );

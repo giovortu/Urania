@@ -7,9 +7,6 @@
 #include <QApplication>
 #include <QSplashScreen>
 
-#include "Library.h"
-#include "OwnCloudUploader.h"
-
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(qdarkstyle);

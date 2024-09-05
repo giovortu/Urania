@@ -8,6 +8,7 @@ DbManager::DbManager(const QString &path, QObject *parent)
     : QObject{parent}
 {
     m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_dbFile = path;
     m_db.setDatabaseName(path);
 
     if (!m_db.open())
@@ -18,6 +19,30 @@ DbManager::DbManager(const QString &path, QObject *parent)
     {
       qDebug() << "Database: connection ok";
     }
+}
+
+void DbManager::reopen()
+{
+    if ( !m_dbFile.isEmpty() )
+    {
+        open(m_dbFile);
+    }
+}
+
+
+void DbManager::open(const QString &newDB)
+{
+    m_dbFile = newDB;
+    if ( m_db.isOpen() )
+    {
+        m_db.close();
+    }
+    m_db.setDatabaseName(newDB);
+}
+
+void DbManager::close()
+{
+    m_db.close();
 }
 
 bool DbManager::createTables()
@@ -622,6 +647,9 @@ QStringList DbManager::getEditors()
 
     return data;
 }
+
+
+
 
 void DbManager::setCollana(const QString &collana)
 {
