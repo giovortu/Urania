@@ -156,8 +156,9 @@ void MainWindow::init()
     connect( ui->actionUpload, &QAction::triggered, this, &MainWindow::onUpload );
     connect( ui->actionDownload, &QAction::triggered, this, &MainWindow::onDownload );
 
+    connect( ui->actionImporta_csv, &QAction::triggered, this, &MainWindow::importCSV );
 
-
+    ui->actionImporta_csv->setVisible( false );
 
     readSettings();
 
@@ -181,6 +182,33 @@ void MainWindow::onSettings()
     editor->exec();
 
 
+}
+
+void MainWindow::importCSV()
+{
+    QString name = QFileDialog::getOpenFileName(this, tr("Importa CSV"), "", tr("CSV Files (*.csv)"));
+    if ( !name.isEmpty() )
+    {
+        QFile file(name);
+        if ( file.open( QIODevice::ReadOnly ) )
+        {
+            QMap<int,bool> owned ;
+            QTextStream in(&file);
+            while ( !in.atEnd() )
+            {
+                QString line = in.readLine();
+                QStringList fields = line.split(",");
+                if ( fields.size() == 2 )
+                {
+                    int number = fields.at(0).toInt();
+                    bool own = fields.at(1).toInt();
+                    owned.insert(number, own);
+                }
+            }
+            file.close();
+            m_library->updateOwn( owned );
+        }
+    }
 }
 
 void MainWindow::initLibrary()

@@ -38,6 +38,8 @@ signals:
 
 public slots:
 
+    bool updateOwn( const QMap<int,bool> &owned );
+
     void setCollana( const QString & collana );
 
     bool populateDatabase( const QString & path, const QString &basename="urania" );

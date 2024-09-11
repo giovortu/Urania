@@ -86,6 +86,11 @@ QList<Book> Library::getReadBooks()
 
 }
 
+bool Library::updateOwn(const QMap<int, bool> &owned)
+{
+     return m_books->updateOwn( owned );
+}
+
 void Library::setCollana(const QString &collana)
 {
     m_books->setCollana( collana );

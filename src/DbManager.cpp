@@ -99,6 +99,36 @@ bool DbManager::createTables()
     return success;
 }
 
+bool DbManager::updateOwn(const QMap<int, bool> &owned)
+{
+    bool success = false;
+
+    QSqlQuery query;
+    query.prepare("UPDATE books SET owned = :owned WHERE collana = :collana AND number = :number");
+
+    QMapIterator<int,bool> i(owned);
+    while (i.hasNext())
+    {
+        i.next();
+        query.bindValue(":owned", i.value());
+        query.bindValue(":number", i.key());
+        query.bindValue(":collana", "Urania");
+
+        if(query.exec())
+        {
+           success = true;
+           //m_currentBookCount = -1;
+        }
+        else
+        {
+            qDebug() << "Database error:"
+                     << query.lastError();
+        }
+    }
+
+    return success;
+}
+
 bool DbManager::addBook( Book &book)
 {
     bool success = false;

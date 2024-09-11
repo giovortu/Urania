@@ -13,6 +13,7 @@ class QComboBox;
 class StarRating;
 class QSettings;
 class QLabel;
+#include <QFile>
 
 
 QT_BEGIN_NAMESPACE
@@ -38,6 +39,8 @@ public slots:
     void init();
 
     void onSettings();
+
+    void importCSV();
 
     void viewBook( Book & book );
     void onNext(  );

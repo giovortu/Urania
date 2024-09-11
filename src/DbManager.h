@@ -40,6 +40,7 @@ public:
 public slots:
 
     bool createTables();
+    bool updateOwn( const QMap<int,bool> &owned );
 
     bool addBook(  Book &book );
     bool updateBookOwned( int number, bool owned );
