@@ -7,24 +7,16 @@
 DbManager::DbManager(const QString &path, QObject *parent)
     : QObject{parent}
 {
-    m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_dbFile = path;
-    m_db.setDatabaseName(path);
+    open( path );
 
-    if (!m_db.open())
-    {
-      qDebug() << "Error: connection with database failed";
-    }
-    else
-    {
-      qDebug() << "Database: connection ok";
-    }
+
 }
 
 void DbManager::reopen()
 {
     if ( !m_dbFile.isEmpty() )
     {
+        close();
         open(m_dbFile);
     }
 }
@@ -32,17 +24,26 @@ void DbManager::reopen()
 
 void DbManager::open(const QString &newDB)
 {
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
     m_dbFile = newDB;
-    if ( m_db.isOpen() )
-    {
-        m_db.close();
-    }
     m_db.setDatabaseName(newDB);
+
+    if (!m_db.open())
+    {
+        qDebug() << "Error: connection with database failed";
+    }
+    else
+    {
+        qDebug() << "Database: connection ok";
+    }
+
 }
 
 void DbManager::close()
 {
     m_db.close();
+    QSqlDatabase::removeDatabase("QSQLITE");
+
 }
 
 bool DbManager::createTables()
