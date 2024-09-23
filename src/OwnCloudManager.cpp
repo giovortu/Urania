@@ -57,10 +57,7 @@ void OwnCloudManager::startNextUpload()
         QPair<QString, QString> upload = uploadQueue.dequeue();
         startUpload(upload.first, upload.second);
     }
-    else
-    {
-        emit finished();
-    }
+
 }
 
 void OwnCloudManager::startNextDownload()
@@ -71,10 +68,7 @@ void OwnCloudManager::startNextDownload()
         QPair<QString, QString> upload = downloadQueue.dequeue();
         startDownload(upload.first, upload.second);
     }
-    else
-    {
-        emit finished();
-    }
+
 
 }
 
@@ -84,6 +78,7 @@ void OwnCloudManager::startUpload(const QString &filePath, const QString &destin
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         qDebug() << "Failed to open file for reading:" << file.errorString();
+        emit finished();
         return;
     }
 
@@ -102,6 +97,7 @@ void OwnCloudManager::startUpload(const QString &filePath, const QString &destin
 
     QNetworkReply *reply =  networkManager->put(request, fileData);
     connect(reply, &QNetworkReply::uploadProgress,this, &OwnCloudManager::workProgress);
+    connect( reply, &QNetworkReply::finished, this, &OwnCloudManager::finished );
 
 }
 
@@ -138,6 +134,7 @@ void OwnCloudManager::startDownload(const QString &destPath, const QString &remo
     {
         qDebug() << "Failed to open file for writing:" << m_file->errorString();
         reply->abort();
+        emit finished();
         return;
     }
 
@@ -158,6 +155,9 @@ void OwnCloudManager::startDownload(const QString &destPath, const QString &remo
                 f.remove();
             }
             m_file->rename( destPath );
+            m_file->close();
+            m_file->deleteLater();
+            emit finished();
         }
 
 
@@ -169,6 +169,7 @@ void OwnCloudManager::startDownload(const QString &destPath, const QString &remo
         {
             m_file->close();
             qDebug() << "Download error " << err;
+            emit finished();
         }
 
     });
