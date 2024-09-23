@@ -21,6 +21,7 @@
 #include "BookEditor.h"
 #include "RemoteDatabaseManager.h"
 #include "JsonEditor.h"
+#include "AspectRatioPixmapLabel.h"
 
 qreal roundToHalf(qreal value) {
     return qRound(value * 2.0) / 2.0;
@@ -75,6 +76,10 @@ void MainWindow::init()
     ui->toolBar->insertWidget(ui->actionNext, lbl);
     ui->toolBar->insertWidget(ui->actionNext, m_totalBooks);
 
+    m_cover_img = new AspectRatioPixmapLabel( this );
+    QVBoxLayout *_layout = new QVBoxLayout();
+    ui->frameImg->setLayout( _layout );
+    _layout->addWidget( m_cover_img , 0, Qt::AlignCenter );
 
     m_search = new QLineEdit( this );
     m_search->setFixedWidth( 100 );
@@ -89,6 +94,8 @@ void MainWindow::init()
     m_searchType->addItem( "Autore", "author" );
     m_searchType->addItem( "Data pubblicazione", "date_pub" );
     m_searchType->addItem( "Autore cover", "cover_author" );
+    m_searchType->addItem( "Indici", "indici" );
+
 
     m_searchType->setCurrentText("Titolo");
 
@@ -365,7 +372,10 @@ void MainWindow::viewBook(Book &book)
 
     QPixmap pix;
     pix.loadFromData( book.cover_image, "JPEG" );
-    ui->cover_img->setPixmap( pix );
+
+    qWarning() << m_cover_img->size();
+
+    m_cover_img->setPixmap( pix  );
 
     ui->owned->setChecked( book.owned );
     ui->read->setChecked( book.read );
@@ -521,7 +531,7 @@ void MainWindow::onSearch()
 
         connect( m_searchDialog, &SearchResultDialog::showBook, this, &MainWindow::loadBookById );
 
-        m_searchDialog->showMaximized();
+        m_searchDialog->show();
     }
 }
 
@@ -613,6 +623,16 @@ void MainWindow::readSettings()
     m_settings->beginGroup("settings");
         m_currentBookNumber = m_settings->value("_current_book", 1 ).toInt();
         m_nomeCollana = m_settings->value("_nome_collana", "Urania" ).toString();
+
+        m_settings->beginGroup("main");
+            restoreGeometry( QByteArray::fromBase64( m_settings->value("geometry").toByteArray()) );
+            restoreState( QByteArray::fromBase64(m_settings->value("state").toByteArray())) ;
+        m_settings->endGroup();
+
+        m_settings->beginGroup("search");
+            m_searchDialog->restoreGeometry( QByteArray::fromBase64( m_settings->value("geometry").toByteArray()) );
+        m_settings->endGroup();
+
     m_settings->endGroup();
 }
 
@@ -621,6 +641,16 @@ void MainWindow::writeSettings()
     m_settings->beginGroup("settings");
         m_settings->setValue("_current_book", m_currentBookNumber );
         m_settings->setValue("_nome_collana", m_nomeCollana );
+
+        m_settings->beginGroup("main");
+            m_settings->setValue( "geometry", saveGeometry().toBase64() );
+            m_settings->setValue( "State", saveState().toBase64() );
+        m_settings->endGroup();
+
+        m_settings->beginGroup("search");
+            m_settings->setValue( "geometry", m_searchDialog->saveGeometry().toBase64() );
+        m_settings->endGroup();
+
     m_settings->endGroup();
 }
 

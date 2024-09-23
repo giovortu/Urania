@@ -42,6 +42,7 @@ SOURCES +=  $$PWD/main.cpp \
             $$PWD/src/JsonFormWidget.cpp \
             $$PWD/src/RemoteDatabaseManager.cpp \
             $$PWD/src/OwnCloudManager.cpp \
+            src/AspectRatioPixmapLabel.cpp \
             src/JsonEditor.cpp
 
 HEADERS += \
@@ -59,6 +60,7 @@ HEADERS += \
             $$PWD/src/version.h \
             $$PWD/src/RemoteDatabaseManager.h \
             $$PWD/src/OwnCloudManager.h \
+            src/AspectRatioPixmapLabel.h \
             src/JsonEditor.h
 
 FORMS += \

@@ -5,7 +5,7 @@
 #include <QTableWidget>
 
 SearchResultDialog::SearchResultDialog(QWidget *parent) :
-    QWidget(parent),
+    QMainWindow(parent),
     ui(new Ui::SearchResultDialog)
 {
     ui->setupUi(this);
@@ -19,6 +19,15 @@ SearchResultDialog::SearchResultDialog(QWidget *parent) :
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &SearchResultDialog::closeTab );
 
     connect( ui->buttonBox, &QDialogButtonBox::rejected, this, &SearchResultDialog::close );
+
+    connect( ui->buttonBox, &QDialogButtonBox::clicked, this, [=](QAbstractButton * button){
+
+        if (ui->buttonBox->buttonRole(button) == QDialogButtonBox::ButtonRole::ResetRole)
+        {
+            closeAllTabs();
+        }
+    });
+
 
 
 }

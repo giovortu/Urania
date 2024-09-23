@@ -14,6 +14,7 @@ class StarRating;
 class QSettings;
 class QLabel;
 class SearchResultDialog;
+class AspectRatioPixmapLabel;
 #include <QFile>
 
 
@@ -129,6 +130,8 @@ private:
     Book m_currentBook;
 
     SearchResultDialog *m_searchDialog;
+
+    AspectRatioPixmapLabel *m_cover_img;
 };
 
 #endif // MAINWINDOW_H

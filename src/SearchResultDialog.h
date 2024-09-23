@@ -1,7 +1,7 @@
 #ifndef SEARCHRESULTDIALOG_H
 #define SEARCHRESULTDIALOG_H
 
-#include <QDialog>
+#include <QMainWindow>
 #include "Book.h"
 #include <QTableWidget>
 #include <QLabel>
@@ -14,7 +14,7 @@ class SearchResultDialog;
 
 
 
-class SearchResultDialog : public QWidget
+class SearchResultDialog : public QMainWindow
 {
     Q_OBJECT
 

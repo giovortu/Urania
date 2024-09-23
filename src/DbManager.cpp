@@ -718,6 +718,7 @@ QString DbManager::searchBooks(const QString &text, const QString & field, QList
 {
     QString _text = text;
 
+
     if ( field == "digital" )
     {
         _text = "1";
@@ -728,7 +729,17 @@ QString DbManager::searchBooks(const QString &text, const QString & field, QList
         return field;
     }
 
-    QString stQuery = QString("SELECT id FROM books WHERE %1 LIKE '%%2%';").arg( field, _text );
+    QString stQuery = "";
+
+    if ( field == "indici" )
+    {
+        stQuery =QString("SELECT * FROM books WHERE id IN ( SELECT id FROM indexes WHERE title LIKE '%%1%'  )").arg( _text );
+
+    }
+    else
+    {
+        stQuery = QString("SELECT id FROM books WHERE %1 LIKE '%%2%';").arg( field, _text );
+    }
 
     QSqlQuery query;
     query.prepare( stQuery );
