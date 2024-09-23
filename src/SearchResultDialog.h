@@ -27,11 +27,19 @@ signals:
 
 public slots:
 
-    void setResults( QList<Book> &books );
+    void setResults( QList<Book> &books , const QString & title);
 
     void rowDoubleClicked(int row, int column);
 
+    void closeTab( int index );
 
+    void closeAllTabs();
+
+protected:
+
+    QTableWidget * openTab( const QString &title );
+
+    void closeEvent(QCloseEvent *event) override;
 
 private:
     Ui::SearchResultDialog *ui;
@@ -39,6 +47,9 @@ private:
     QTableWidget *m_table;
 
     QList<Book> m_books;
+
+
+    int m_numTabs;
 };
 
 #endif // SEARCHRESULTDIALOG_H

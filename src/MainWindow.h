@@ -13,6 +13,7 @@ class QComboBox;
 class StarRating;
 class QSettings;
 class QLabel;
+class SearchResultDialog;
 #include <QFile>
 
 
@@ -126,6 +127,8 @@ private:
     QLabel *m_totalBooks;
 
     Book m_currentBook;
+
+    SearchResultDialog *m_searchDialog;
 };
 
 #endif // MAINWINDOW_H

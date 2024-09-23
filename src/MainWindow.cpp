@@ -125,8 +125,10 @@ void MainWindow::init()
 
     connect( saveComments, &QPushButton::clicked, this, &MainWindow::onSaveComments );
 
+    m_searchDialog = new SearchResultDialog();
+    m_searchDialog->setWindowTitle( "Search results"  );
 
-
+    m_searchDialog->hide();
 
     auto lay = qobject_cast<QGridLayout*>(ui->frame->layout());
 
@@ -513,16 +515,13 @@ void MainWindow::onSearch()
     QString typeText = m_library->searchBooks( m_search->text(), type,  m_results );
 
     if ( m_results.size() > 0 )
-    {
-        auto dialog = new SearchResultDialog();
+    {        
 
-        dialog->setWindowTitle( QString("Search results for \"%1\" in \"%2\"").arg( m_search->text(), typeText ) );
+        m_searchDialog->setResults( m_results , QString("Search results for \"%1\" in \"%2\"").arg( m_search->text(), typeText ) );
 
-        dialog->setResults( m_results );
+        connect( m_searchDialog, &SearchResultDialog::showBook, this, &MainWindow::loadBookById );
 
-        connect( dialog, &SearchResultDialog::showBook, this, &MainWindow::loadBookById );
-
-        dialog->showMaximized();
+        m_searchDialog->showMaximized();
     }
 }
 
