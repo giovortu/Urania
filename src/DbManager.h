@@ -49,7 +49,7 @@ public slots:
     bool updateBookStars( int number, int stars );
     bool updateBookIsDigital( int number, bool digital );
 
-
+    bool updateBook( Book *book );
 
     bool addIndex( int number, const Index &index );
 

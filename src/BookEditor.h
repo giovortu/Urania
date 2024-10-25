@@ -21,6 +21,9 @@ public:
     // Set the Book object to edit
     void setBook(Book* book);
 
+signals:
+    void bookChanged( Book *book );
+
 private slots:
     // Handle user interaction and update the Book object
     void saveData();

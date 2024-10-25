@@ -116,6 +116,8 @@ void MainWindow::init()
 
     connect( ui->actionBookInfo, &QAction::triggered, this, &MainWindow::onBookInfo );
 
+    connect( ui->actionEditBook, &QAction::triggered, this, &MainWindow::onEditBook );
+
     connect( ui->owned, &QCheckBox::clicked, this, &MainWindow::onOwnedChanged );
     connect( ui->read, &QCheckBox::clicked, this, &MainWindow::onReadChanged );
 
@@ -317,6 +319,31 @@ void MainWindow::onBookInfo()
 
 
 
+}
+
+void MainWindow::onEditBook()
+{
+    Book *book = new Book();
+    if ( m_library->getBook( m_currentBookNumber, *book ) )
+    {
+        auto edit = new BookEditor( m_library, this );
+        edit->setBook( book );
+        connect( edit, &BookEditor::bookChanged, this, [=]( Book * book ){
+
+            if ( m_library->updateBook( book ) )
+            {
+
+            }
+            else
+            {
+
+            }
+            viewBook( *book );
+
+        } );
+
+        edit->show();
+    }
 }
 
 void MainWindow::viewBook(Book &book)

@@ -7,6 +7,9 @@
     <file>import.svg</file>
     <file>file-import-outline.svg</file>
     <file>splash.png</file>
+    <file>edit.png</file>
+    <file>book-edit.svg</file>
+
 
   </qresource>
 </RCC>

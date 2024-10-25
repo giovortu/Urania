@@ -80,6 +80,8 @@ void BookEditor::saveData()
 
     accept();
 
+    emit bookChanged( book );
+
     // After setting the data, you can save the Book object or perform any necessary actions.
 }
 

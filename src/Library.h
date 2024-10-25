@@ -51,6 +51,8 @@ public slots:
     bool updateBookStars( int number, int stars );
     bool updateBookIsDigital(int id, bool digital);
 
+    bool updateBook( Book *book );
+
 protected:
     DbManager *m_books;
 

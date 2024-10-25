@@ -96,6 +96,8 @@ public slots:
 
     void onBookInfo();
 
+    void onEditBook();
+
     bool parseHTML( const QString & filename );
 
 protected:

@@ -186,3 +186,8 @@ bool Library::updateBookIsDigital(int id, bool digital)
     return m_books->updateBookIsDigital( id, digital );
 }
 
+bool Library::updateBook(Book *book)
+{
+   return  m_books->updateBook( book );
+}
+

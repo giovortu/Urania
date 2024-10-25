@@ -334,6 +334,63 @@ bool DbManager::updateBookIsDigital(int id, bool digital)
     return success;
 }
 
+bool DbManager::updateBook(Book *book)
+{
+
+    bool success = false;
+
+    QSqlQuery query;
+    query.prepare(
+        "UPDATE books \
+        SET number = :number, \
+            title_ita = :title_ita, \
+            title_orig = :title_orig, \
+            author = :author, \
+            date_pub = :date_pub, \
+            cover_author = :cover_author, \
+            cover_image = :cover_image, \
+            synopsis = :synopsis, \
+            synopsis_image = :synopsis_image, \
+            owned = :owned, \
+            stars = :stars, \
+            comment = :comment, \
+            read = :read, \
+            collana = :collana, \
+            editore = :editore, \
+            digital = :digital \
+        WHERE id = :id;");
+
+    query.bindValue(":id", book->id);
+    query.bindValue(":number", book->number);
+    query.bindValue(":title_ita", book->title_ita);
+    query.bindValue(":title_orig", book->title_orig);
+    query.bindValue(":author", book->author);
+    query.bindValue(":date_pub", book->date_pub);
+    query.bindValue(":cover_author", book->cover_author);
+    query.bindValue(":cover_image", book->cover_image);
+    query.bindValue(":synopsis", book->synopsis);
+    query.bindValue(":synopsis_image", book->synopsis_image);
+    query.bindValue(":owned", book->owned);
+    query.bindValue(":stars", book->stars);
+    query.bindValue(":comment", book->comment);
+    query.bindValue(":read", book->read);
+    query.bindValue(":collana", book->collana);
+    query.bindValue(":editore", book->editore);
+    query.bindValue(":digital", book->isDigital);
+
+    if(query.exec())
+    {
+        success = true;
+    }
+    else
+    {
+        qDebug() << "add indexes:"
+                 << query.lastError();
+    }
+    return success;
+
+}
+
 bool DbManager::addIndex(int id, const Index &index)
 {
     bool success = false;
