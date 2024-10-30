@@ -42,8 +42,9 @@ SOURCES +=  $$PWD/main.cpp \
             $$PWD/src/JsonFormWidget.cpp \
             $$PWD/src/RemoteDatabaseManager.cpp \
             $$PWD/src/OwnCloudManager.cpp \
-            src/AspectRatioPixmapLabel.cpp \
-            src/JsonEditor.cpp
+            $$PWD/src/AspectRatioPixmapLabel.cpp \
+            $$PWD/src/JsonEditor.cpp \
+            $$PWD/src/AboutBox.cpp
 
 HEADERS += \
             $$PWD/src/Library.h \
@@ -60,15 +61,17 @@ HEADERS += \
             $$PWD/src/version.h \
             $$PWD/src/RemoteDatabaseManager.h \
             $$PWD/src/OwnCloudManager.h \
-            src/AspectRatioPixmapLabel.h \
-            src/JsonEditor.h
+            $$PWD/src/AspectRatioPixmapLabel.h \
+            $$PWD/src/JsonEditor.h \
+            $$PWD/src/AboutBox.h
 
 FORMS += \
             $$PWD/ui/MainWindow.ui \
             $$PWD/ui/SearchResultDialog.ui \
             $$PWD/ui/Statistics.ui \
             $$PWD/ui/BookEditor.ui \
-            $$PWD/ui/RemoteDatabaseManager.ui
+            $$PWD/ui/RemoteDatabaseManager.ui \
+            $$PWD/ui/AboutBox.ui
 
 RESOURCES+= $$PWD/res/qdarkstyle/qdarkstyle.qrc \
             $$PWD/res/img/img.qrc
@@ -79,5 +82,10 @@ win32 {
 RC_FILE = $$PWD/res/urania.rc
 
 QMAKE_POST_LINK +=  $$QTPATH/windeployqt.exe --dir $${DESTDIR} $${DESTDIR}/$${TARGET}.exe
+DEFINES+= GIT_CURRENT_SHA1='"\\\" $$system( git.exe rev-parse HEAD )\\\""'  BUILD_DATE='"\\\"$$system( date.exe /t )\\\""'
 
+
+}
+else {
+DEFINES+= GIT_CURRENT_SHA1='"\\\"$$system(cd $$PWD; git rev-parse HEAD)\\\""'  BUILD_DATE='"\\\"$$system( date -R )\\\""'
 }

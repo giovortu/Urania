@@ -9,6 +9,7 @@
 #include <QComboBox>
 #include <QTimer>
 
+#include "version.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "Library.h"
@@ -22,6 +23,7 @@
 #include "RemoteDatabaseManager.h"
 #include "JsonEditor.h"
 #include "AspectRatioPixmapLabel.h"
+#include "AboutBox.h"
 
 qreal roundToHalf(qreal value) {
     return qRound(value * 2.0) / 2.0;
@@ -169,11 +171,22 @@ void MainWindow::init()
 
     connect( ui->actionImporta_csv, &QAction::triggered, this, &MainWindow::importCSV );
 
+    connect( ui->action_About, &QAction::triggered, this, [=](){
+
+        auto *about = new AboutBox( nullptr );
+        about->setInfo( "Urania", "Books manager", VERSIONFULL, QDate::fromString( BUILD_DATE, "ddd MM/dd/yyyy").toString( "ddd dd/MM/yyyy") , GIT_CURRENT_SHA1);
+        about->exec();
+
+
+    } );
+
     ui->actionImporta_csv->setVisible( false );
 
     readSettings();
 
     initLibrary();
+
+    setWindowTitle( QString("Urania ") + VERSIONFULL );
 
     emit ready();
 
