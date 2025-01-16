@@ -3,6 +3,7 @@
 
 #include <QWidget>
 class OwnCloudManager;
+#include <QDateTime>
 
 namespace Ui {
 class RemoteDatabaseManager;
@@ -16,14 +17,18 @@ public:
     explicit RemoteDatabaseManager(QWidget *parent = nullptr);
     ~RemoteDatabaseManager();
 
-signals:
+    void getLastRemoteUpdate( );
+    QDateTime getLastUpdate();
 
+signals:
     void finished( );
 
 public slots:
 
     void startUpload();
     void startDownload();
+
+    void lastUpdateReceived();
 
 protected:
     void changeEvent(QEvent *e);
