@@ -463,12 +463,12 @@ bool DbManager::getBook(int number, Book &book, bool global)
 
     if ( global )
     {
-        query.prepare( QString("SELECT id FROM books ORDER BY id LIMIT 1 OFFSET %2-1 " ).arg( number ));
+        query.prepare( QString("SELECT id FROM books ORDER BY number LIMIT 1 OFFSET %2-1 " ).arg( number ));
 
     }
     else
     {
-        query.prepare( QString("SELECT id FROM books where collana = :collana ORDER BY id LIMIT 1 OFFSET %2-1 " ).arg( number ));
+        query.prepare( QString("SELECT id FROM books where collana = :collana ORDER BY number LIMIT 1 OFFSET %2-1 " ).arg( number ));
         query.bindValue(":collana", m_collana);
     }
 
