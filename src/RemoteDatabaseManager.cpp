@@ -64,7 +64,7 @@ void RemoteDatabaseManager::startUpload()
         {
             QString fileName = path + info.fileName();
             qDebug() << "Queuing " << info.fileName();
-            uploader->enqueueUpload(fileName, "/GDRIVE/Urania");
+            uploader->enqueueUpload(fileName, "");
         }
     }
 }
@@ -89,7 +89,7 @@ void RemoteDatabaseManager::startDownload()
 
     QString path = QApplication::applicationDirPath() + "/database/books.db";
 
-    uploader->enqueueDownload(path, "GDRIVE/Urania/books.db");
+    uploader->enqueueDownload(path, "/books.db");
 
 
 }
