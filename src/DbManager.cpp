@@ -12,6 +12,7 @@ DbManager::DbManager(const QString &path, QObject *parent)
 
 }
 
+
 void DbManager::reopen()
 {
     if ( !m_dbFile.isEmpty() )
@@ -491,6 +492,33 @@ bool DbManager::getBook(int number, Book &book, bool global)
 
     return getBookById( id, book ) != -1;
 
+
+}
+
+
+
+bool DbManager::exists(Book &book)
+{
+
+    int id = -1;
+
+    QString q = QString("SELECT number FROM books where title_ita = :title_ita AND author = :author;" );
+
+    QSqlQuery query;
+
+    query.prepare( q );
+    query.bindValue(":title_ita", book.title_ita);
+    query.bindValue(":author", book.author);
+
+    if(query.exec())
+    {
+        if (query.next())
+        {
+            id = query.value( 0 ).toInt();
+        }
+    }
+
+    return id != -1;
 
 }
 

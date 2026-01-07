@@ -14,6 +14,8 @@ class DbManager : public QObject
 public:
     explicit DbManager(const QString &path, QObject *parent = nullptr);
 
+    bool exists( Book &book );
+
     bool getBook(int number, Book &book, bool global = false);
     int getBookById(int id, Book &book );
 

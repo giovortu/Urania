@@ -29,6 +29,8 @@ BookEditor::BookEditor(Library *library, QWidget* parent) : QDialog(parent),m_li
     populateCollana();
     populateEditors();
 
+    setModal(true);
+
 
 
 }

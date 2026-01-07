@@ -18,6 +18,9 @@ public:
     void open( const QString &newDB );
     void close();
 
+    bool exists(Book &book);
+
+
     QString searchBooks( const QString &text, const QString & type, QList<Book> &books );
     bool getBook(int number, Book &book);
     int getBookById(int id, Book &book);

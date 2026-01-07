@@ -25,6 +25,17 @@
 #include "AspectRatioPixmapLabel.h"
 #include "AboutBox.h"
 
+#include <QJsonDocument>
+#include <QDomDocument>
+
+#include "tidy.h"
+#include "tidybuffio.h"
+#include "tidyenum.h"
+#include "tidyplatform.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+
 qreal roundToHalf(qreal value) {
     return qRound(value * 2.0) / 2.0;
 }
@@ -41,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto sett = new SettingsManager( this );
 
     m_settings = sett->settings();
+
+
 
 }
 
@@ -161,6 +174,9 @@ void MainWindow::init()
 
     connect( ui->actionImportFromFile, &QAction::triggered, this, &MainWindow::onImportFromFile );
     connect( ui->actionImport_from_web, &QAction::triggered, this, &MainWindow::onImportFromWeb );
+    connect( ui->actionImport_all, &QAction::triggered, this, &MainWindow::onImportAllFromWeb );
+
+
 
     connect( ui->actionStatistics, &QAction::triggered, this, &MainWindow::onStatistics );
 
@@ -187,6 +203,8 @@ void MainWindow::init()
     initLibrary();
 
     setWindowTitle( QString("Urania ") + VERSIONFULL );
+
+    connect( this, &MainWindow::downloadList, this, &MainWindow::doDownloadList );
 
     emit ready();
 
@@ -796,6 +814,15 @@ void MainWindow::onImportFromWeb()
 
     QString remote = QInputDialog::getText( this, "Import from web", "Enter the URL of the web page to import from" );
 
+
+
+    doImportFromWeb( remote );
+
+}
+
+void MainWindow::doImportFromWeb( const QString & remote )
+{
+
     QUrl url(remote);
 
     auto manager = new QNetworkAccessManager(this);
@@ -804,7 +831,7 @@ void MainWindow::onImportFromWeb()
     QNetworkRequest request(url);
     request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
 
-    manager->get( request );
+
 
     // Connect a slot to handle the reply when it is ready
     QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
@@ -814,7 +841,7 @@ void MainWindow::onImportFromWeb()
         {
             QByteArray htmlData = reply->readAll();
             QString html = QString::fromUtf8(htmlData);
-            qDebug() << "HTML content:" << html;
+            //qDebug() << "HTML content:" << html;
 
                QString fileName = QApplication::applicationDirPath() + "/temp.html";
                QFile file( fileName );
@@ -828,7 +855,15 @@ void MainWindow::onImportFromWeb()
                    Book book;
                    book.fromHTML( fileName );
 
-                   qWarning() << book.cover_image_path;
+                   qWarning() << "Check'" <<  book.title_ita << "'";
+                   if ( m_library->exists( book ) )
+                   {
+                       qWarning() << "Book '" <<  book.title_ita << "' already in library";
+                       emit finished();
+                       return;
+                   }
+
+                   qWarning() << "Past check" << book.title_ita;
 
                    QFileInfo info( book.cover_image_path );
                    QString cover = info.fileName();
@@ -841,14 +876,14 @@ void MainWindow::onImportFromWeb()
 
                    QUrl imgUrl( img );
 
-                   qWarning() << img;
+                   //qWarning() << img;
 
                    auto manager = new QNetworkAccessManager(this);
 
                    QNetworkRequest request(imgUrl);
                    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
 
-                   manager->get( request );
+
 
                    // Connect a slot to handle the reply when it is ready
                    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
@@ -863,12 +898,12 @@ void MainWindow::onImportFromWeb()
                            f.write( imgData );
                            f.close();
 
-                            qWarning() << "Saved";
+
 
                             Book book;
                             book.fromHTML( fileName );
 
-                            qWarning() << m_nomeCollana;
+                            //qWarning() << m_nomeCollana;
                             book.collana = m_nomeCollana;
 
                             BookEditor editor( m_library, this );
@@ -878,9 +913,16 @@ void MainWindow::onImportFromWeb()
                             {
                                 m_library->addBook( book );
                                 m_currentBook = book;
-                                viewBook( book );
+
+                                updateView();
+                                viewBook(book);
+
+                                qWarning() << "Saved";
+
+
                             }
 
+                            emit finished();
 
                        }
                        else
@@ -891,6 +933,8 @@ void MainWindow::onImportFromWeb()
                        manager->deleteLater();
 
                    });
+
+                   manager->get( request );
                }
         }
         else
@@ -901,7 +945,157 @@ void MainWindow::onImportFromWeb()
 
     });
 
+    manager->get( request );
+
 }
+
+void MainWindow::onImportAllFromWeb()
+{
+    QString remote = QInputDialog::getText( this, "Import from web", "Enter the URL of the web page to import from" );
+
+    QUrl url(remote);
+
+    auto manager = new QNetworkAccessManager(this);
+
+    // Send an HTTP GET request to the URL
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+    manager->get( request );
+
+    // Connect a slot to handle the reply when it is ready
+    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+    {
+
+        QStringList toDownload;
+
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            QByteArray htmlData = reply->readAll();
+
+            std::string htmlContent = QString::fromUtf8(htmlData).toStdString();
+
+            TidyDoc tdoc = tidyCreate();
+            TidyBuffer output = {0};
+            TidyBuffer errbuf = {0};
+            tidyBufInit(&output);
+            tidyBufInit(&errbuf);
+
+            // Configure Tidy for XHTML output
+
+            tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
+            tidyOptSetBool(tdoc, TidyShowWarnings, no);
+            tidyOptSetBool(tdoc, TidyDropEmptyElems, yes);
+            tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+
+            tidyOptSetBool(tdoc, TidyQuiet, yes);
+            tidyOptSetInt(tdoc, TidyWrapLen, 4096);
+
+            // Parse the HTML content
+            tidySetErrorBuffer(tdoc, &errbuf);
+            if (tidyParseString(tdoc, htmlContent.c_str()) >= 0)
+            {
+                tidyCleanAndRepair(tdoc);
+                tidyRunDiagnostics(tdoc);
+                tidySaveBuffer(tdoc, &output);
+
+
+                QString converted = QString( (char*)output.bp );
+
+                converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
+                converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+                converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
+                converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&nbsp;", "", Qt::CaseInsensitive);
+
+
+                converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "Copertina di" , "", Qt::CaseInsensitive );
+
+
+                QDomDocument doc;
+                QDomDocument::ParseResult result = doc.setContent( converted.toUtf8() );
+
+                qWarning() << result.errorMessage;
+
+                int pos = remote.lastIndexOf("/");
+                QString basPath= remote.left( pos );
+
+                if ( result )
+                {
+
+
+                    QDomNodeList links = doc.elementsByTagName("a");
+
+                    for ( int i =0; i < links.count(); i++ )
+                    {
+                        QDomElement link = links.at(i).toElement();
+
+                        if ( link.isNull() )
+                            continue;
+
+                        QDomNodeList imgList = link.elementsByTagName("img");
+
+                        if ( imgList.count() > 0 )
+                        {
+
+                            QDomElement imgElement = imgList.at(0).toElement();
+                            if (imgElement.isNull())
+                                continue;
+
+                            // Check if <img> has alt attribute
+                            if (imgElement.hasAttribute("alt"))
+                            {
+                                QString href = link.attribute("href");
+
+
+                                QString url = basPath + "/" + href;
+                                toDownload << url;
+
+
+                                qWarning() << "Found link: " << url;
+
+                               // doImportFromWeb( toDownload );
+                            }
+
+
+                        }
+
+
+                    }
+
+                }
+
+
+
+            }
+
+            tidyBufFree(&output);
+
+
+        }
+
+        emit downloadList(toDownload);
+
+    });
+
+
+
+}
+
+
 
 
 bool MainWindow::parseHTML( const QString & fileName )
@@ -922,6 +1116,38 @@ bool MainWindow::parseHTML( const QString & fileName )
      }
 
      return true;
+}
+
+void MainWindow::doDownloadList(const QStringList &list)
+{
+    qWarning() << list;
+
+
+    static int count = 0;
+
+    connect( this, &MainWindow::finished, this, [=](){
+
+        if ( count < list.size() )
+        {
+            QString url = list.at( count++ );
+
+            qWarning() << "\nImporting " << url;
+
+            doImportFromWeb( url );
+        }
+        else
+        {
+            qWarning() << "Finished all downloads";
+            count = 0;
+        }
+
+
+
+    });
+
+    emit finished();
+
+
 }
 
 

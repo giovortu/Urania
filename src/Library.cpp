@@ -28,6 +28,11 @@ void Library::close()
     m_books->close();
 }
 
+bool Library::exists(Book &book)
+{
+    return m_books->exists(book);
+}
+
 bool Library::getBook(int number, Book &book)
 {
     return m_books->getBook( number, book );

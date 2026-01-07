@@ -292,7 +292,7 @@ bool Book::fromHTML(const QString &path)
 
 
 
-#ifndef VERBOSE
+#ifdef VERBOSE
             qWarning().noquote() << "Converted XHTML:\n" << converted;
 #endif
 
@@ -373,7 +373,7 @@ bool Book::fromHTML(const QString &path)
                         {
                             QString image_path = root + "/" + findImageSRC( cells.at(0) );
 
-                            qWarning() << "Cover:" << image_path;
+                            //qWarning() << "Cover:" << image_path;
 
                             QFile img( image_path );
 
@@ -387,15 +387,15 @@ bool Book::fromHTML(const QString &path)
                             else
                             {
 
-                                qWarning() << "Image does not exist" << image_path;
+                                //qWarning() << "Image does not exist" << image_path;
                             }
 
                             QString value = findTextValue( cells.at(1) );
                             number = value.toInt();
-                            qWarning() << "Number:" << value;
+                            //qWarning() << "Number:" << value;
 
                             title_ita = findTextValue( cells.at(2) );
-                            qWarning() << "Title:" << title_ita;
+                            //qWarning() << "Title:" << title_ita;
 
 
 
@@ -411,10 +411,10 @@ bool Book::fromHTML(const QString &path)
                                 date_pub = QDate::fromString( data, "M/yyyy" );
                             }
 
-                            qWarning() << "Pubblicato il:" << date_pub;
+                            //qWarning() << "Pubblicato il:" << date_pub;
 
                             title_orig = findTextValue( cells.at(1) );
-                            qWarning() << "Title orig:" << title_orig;
+                            //qWarning() << "Title orig:" << title_orig;
 
                         }
                         break;
@@ -426,10 +426,10 @@ bool Book::fromHTML(const QString &path)
                             {
                                 cover_author = "N/A";
                             }
-                            qWarning() << "Cover author:" << cover_author;
+                            //qWarning() << "Cover author:" << cover_author;
 
                             author = findTextValue( cells.at(1) );
-                            qWarning() << "Autore:" << author;
+                            //qWarning() << "Autore:" << author;
 
                         }
                         break;
@@ -443,7 +443,7 @@ bool Book::fromHTML(const QString &path)
                             {
                                 QString image_path = root + "/" + findImageSRC( cells.at(0) );
 
-                                qWarning() << "synopsis:" << image_path;
+                                //qWarning() << "synopsis:" << image_path;
 
                                 QFile img( image_path );
                                 if ( img.open( QIODevice::ReadOnly) )
@@ -453,13 +453,13 @@ bool Book::fromHTML(const QString &path)
                                 }
                                 else
                                 {
-                                    qWarning() << "synopsis Image does not exist" << image_path;
+                                   // qWarning() << "synopsis Image does not exist" << image_path;
                                 }
                             }
                             else
                             {
                                 synopsis = text;
-                                qWarning() << "Synopsis:" << synopsis;
+                                //qWarning() << "Synopsis:" << synopsis;
                             }
 
 
@@ -474,7 +474,7 @@ bool Book::fromHTML(const QString &path)
 
                 }
 
-                qWarning() << tables.size() << "tables found";
+                //qWarning() << tables.size() << "tables found";
 
 
                 int idx = -1;
@@ -524,6 +524,8 @@ bool Book::fromHTML(const QString &path)
 
     return true;
 }
+
+
 
 auto operator<<(QDebug ds, const Book &book) -> QDebug
 {

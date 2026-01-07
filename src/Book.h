@@ -46,6 +46,7 @@ public:
 
     bool fromHTML( const QString &path );
 
+
     int number;
     QString title_ita;
     QString title_orig;

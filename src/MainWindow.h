@@ -16,6 +16,7 @@ class QLabel;
 class SearchResultDialog;
 class AspectRatioPixmapLabel;
 #include <QFile>
+#include <QTemporaryFile>
 
 
 QT_BEGIN_NAMESPACE
@@ -36,7 +37,13 @@ signals:
 
     void ready();
 
+    void finished();
+
+    void downloadList( const QStringList & list );
+
 public slots:
+
+
 
     void init();
 
@@ -70,6 +77,10 @@ public slots:
 
     void onImportFromFile( );
     void onImportFromWeb( );
+    void doImportFromWeb( const QString & remote );
+    void onImportAllFromWeb();
+
+
 
     void loadBook( int index );
 
@@ -99,6 +110,8 @@ public slots:
     void onEditBook();
 
     bool parseHTML( const QString & filename );
+
+    void doDownloadList( const QStringList & list );
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
