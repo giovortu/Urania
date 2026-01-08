@@ -40,6 +40,66 @@ qreal roundToHalf(qreal value) {
     return qRound(value * 2.0) / 2.0;
 }
 
+bool downloadFile(const QString& url, const QString& savePath) {
+    QNetworkAccessManager manager;
+    QNetworkRequest request(url);
+
+    QNetworkReply* reply = manager.get(request);
+    QEventLoop loop;
+
+    // Connect finished signal
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+    // Connect error signal
+    QObject::connect(reply, &QNetworkReply::errorOccurred,reply,
+                    [&loop](QNetworkReply::NetworkError) {
+        loop.quit();
+    });
+
+    // Set 30 second timeout
+    QTimer::singleShot(30000, &loop, &QEventLoop::quit);
+
+    // Block until finished
+    loop.exec();
+
+    // Check for errors
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << "Error:" << reply->errorString();
+        reply->deleteLater();
+        return false;
+    }
+
+    // Check HTTP status code
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode != 200) {
+        qDebug() << "HTTP Error:" << statusCode;
+        reply->deleteLater();
+        return false;
+    }
+
+    // Get data
+    QByteArray data = reply->readAll();
+
+    // Ensure directory exists
+    QFileInfo fileInfo(savePath);
+    QDir().mkpath(fileInfo.absolutePath());
+
+    // Save to file
+    QFile file(savePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << "Cannot open file for writing:" << savePath;
+        reply->deleteLater();
+        return false;
+    }
+
+    file.write(data);
+    file.close();
+
+    qDebug() << "Downloaded" << data.size() << "bytes to" << savePath;
+
+    reply->deleteLater();
+    return true;
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -174,7 +234,9 @@ void MainWindow::init()
 
     connect( ui->actionImportFromFile, &QAction::triggered, this, &MainWindow::onImportFromFile );
     connect( ui->actionImport_from_web, &QAction::triggered, this, &MainWindow::onImportFromWeb );
+    connect( ui->actionImportFrom_web42, &QAction::triggered, this, &MainWindow::onImportFromWebZona42 );
     connect( ui->actionImport_all, &QAction::triggered, this, &MainWindow::onImportAllFromWeb );
+    connect( ui->actionAll_Zona42, &QAction::triggered, this, &MainWindow::onImportAllFromWebZona42 );
 
 
 
@@ -205,6 +267,7 @@ void MainWindow::init()
     setWindowTitle( QString("Urania ") + VERSIONFULL );
 
     connect( this, &MainWindow::downloadList, this, &MainWindow::doDownloadList );
+    connect( this, &MainWindow::downloadListZona42, this, &MainWindow::doDownloadListZona42 );
 
     emit ready();
 
@@ -430,8 +493,6 @@ void MainWindow::viewBook(Book &book)
 
     QPixmap pix;
     pix.loadFromData( book.cover_image, "JPEG" );
-
-    qWarning() << m_cover_img->size();
 
     m_cover_img->setPixmap( pix  );
 
@@ -820,6 +881,17 @@ void MainWindow::onImportFromWeb()
 
 }
 
+void MainWindow::onImportFromWebZona42()
+{
+
+    QString remote = QInputDialog::getText( this, "Import from web (Zona 42 )", "Enter the URL of the web page to import from" );
+
+
+
+    doImportFromWebZona42( remote );
+
+}
+
 void MainWindow::doImportFromWeb( const QString & remote )
 {
 
@@ -961,13 +1033,13 @@ void MainWindow::onImportAllFromWeb()
     QNetworkRequest request(url);
     request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
 
-    manager->get( request );
 
     // Connect a slot to handle the reply when it is ready
     QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
     {
 
         QStringList toDownload;
+
 
         if (reply->error() == QNetworkReply::NoError)
         {
@@ -1091,8 +1163,428 @@ void MainWindow::onImportAllFromWeb()
 
     });
 
+    manager->get( request );
 
 
+
+}
+
+QString getInnerHtml(const QDomElement& element) {
+    if (element.isNull()) {
+        return QString();
+    }
+
+    QString html;
+    QTextStream stream(&html);
+
+    // Iterate through all child nodes
+    QDomNode child = element.firstChild();
+    while (!child.isNull()) {
+        // Save each child node to string
+        child.save(stream, 0);
+        child = child.nextSibling();
+    }
+
+    return html;
+}
+
+QString extractUnformattedText(const QDomNode& node) {
+    QString result;
+
+    // Traverse all child nodes recursively
+    QDomNode child = node.firstChild();
+    while (!child.isNull()) {
+        if (child.isText()) {
+            // Add text node content
+            result += child.nodeValue().trimmed() + " ";
+        } else if (child.isElement()) {
+            // Recursively process child elements
+            result += "<p>" + extractUnformattedText(child) + "</p>";
+        }
+        child = child.nextSibling();
+    }
+
+    return result.trimmed();
+}
+
+void MainWindow::onImportAllFromWebZona42()
+{
+
+QString remote = QInputDialog::getText( this, "Import from web (Zona 42)", "Enter the URL of the web page to import from" );
+
+    QUrl url(remote);
+
+    auto manager = new QNetworkAccessManager(this);
+
+    // Send an HTTP GET request to the URL
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+
+
+    // Connect a slot to handle the reply when it is ready
+    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+    {
+
+        QStringList toDownload;
+
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            QByteArray htmlData = reply->readAll();
+
+            std::string htmlContent = QString::fromUtf8(htmlData).toStdString();
+
+            TidyDoc tdoc = tidyCreate();
+            TidyBuffer output = {0};
+            TidyBuffer errbuf = {0};
+            tidyBufInit(&output);
+            tidyBufInit(&errbuf);
+
+            // Configure Tidy for XHTML output
+
+            tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
+            tidyOptSetBool(tdoc, TidyShowWarnings, no);
+            tidyOptSetBool(tdoc, TidyDropEmptyElems, yes);
+            tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+
+            tidyOptSetBool(tdoc, TidyQuiet, yes);
+            tidyOptSetInt(tdoc, TidyWrapLen, 4096);
+
+            // Parse the HTML content
+            tidySetErrorBuffer(tdoc, &errbuf);
+            if (tidyParseString(tdoc, htmlContent.c_str()) >= 0)
+            {
+                tidyCleanAndRepair(tdoc);
+                tidyRunDiagnostics(tdoc);
+                tidySaveBuffer(tdoc, &output);
+
+
+                QString converted = QString( (char*)output.bp );
+
+                converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
+                converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
+                //converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+                converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
+                converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&nbsp;", "", Qt::CaseInsensitive);
+
+
+                converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
+                //converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "Copertina di" , "", Qt::CaseInsensitive );
+
+
+                QDomDocument doc;
+                QDomDocument::ParseResult result = doc.setContent( converted.toUtf8() );
+
+                qWarning() << result.errorMessage;
+
+                int pos = remote.lastIndexOf("/");
+                QString basPath= remote.left( pos );
+
+
+                if ( result )
+                {
+
+
+                    // Find all div elements
+                    QDomNodeList divList = doc.elementsByTagName("div");
+
+                    // Regular expression to match IDs starting with "pgc-"
+                    QRegularExpression idPattern("^pgc-.*");
+
+                    for (int i = divList.count() - 1 ; i >= 0; i--)
+                    {
+                        QDomElement divElement = divList.at(i).toElement();
+                        if (divElement.isNull()) continue;
+
+                        // Check if div has ID attribute
+                        if (divElement.hasAttribute("id")) {
+                            QString divId = divElement.attribute("id");
+
+                            // Check if ID matches pattern
+                            if (idPattern.match(divId).hasMatch())
+                            {
+                                qWarning()  << "\n=== Found DIV with ID: " << divId.toStdString() << " ===" ;
+
+                                QDomNodeList anchorsList = divElement.elementsByTagName("a");
+                                if (!anchorsList.isEmpty())
+                                {
+                                    QDomElement anchorElement = anchorsList.at(0).toElement();
+                                    if (!anchorElement.isNull())
+                                    {
+                                        // Extract common img attributes
+                                        QString href = anchorElement.attribute("href");
+
+
+                                        qWarning() << "Book Source: " << href.toStdString();
+
+                                        toDownload << href;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            emit downloadListZona42(toDownload);
+        }
+        manager->deleteLater();
+    });
+
+    manager->get( request );
+
+
+}
+
+void MainWindow::doImportFromWebZona42(const QString &remote)
+{
+    qWarning() << "Downloading " << remote;
+
+
+    QUrl url(remote);
+
+    auto manager = new QNetworkAccessManager(this);
+
+    // Send an HTTP GET request to the URL
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+    // Connect a slot to handle the reply when it is ready
+    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+    {
+
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            QByteArray htmlData = reply->readAll();
+            std::string htmlContent = QString::fromUtf8(htmlData).toStdString();
+
+            TidyDoc tdoc = tidyCreate();
+            TidyBuffer output = {0};
+            TidyBuffer errbuf = {0};
+            tidyBufInit(&output);
+            tidyBufInit(&errbuf);
+
+            // Configure Tidy for XHTML output
+
+            tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
+            tidyOptSetBool(tdoc, TidyShowWarnings, no);
+            tidyOptSetBool(tdoc, TidyDropEmptyElems, yes);
+            tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+
+            tidyOptSetBool(tdoc, TidyQuiet, yes);
+            tidyOptSetInt(tdoc, TidyWrapLen, 4096);
+
+            // Parse the HTML content
+            tidySetErrorBuffer(tdoc, &errbuf);
+            if (tidyParseString(tdoc, htmlContent.c_str()) >= 0)
+            {
+                tidyCleanAndRepair(tdoc);
+                tidyRunDiagnostics(tdoc);
+                tidySaveBuffer(tdoc, &output);
+
+
+                QString converted = QString( (char*)output.bp );
+
+                converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
+                converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
+                //converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+                converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
+                converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&nbsp;", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&raquo;", "", Qt::CaseInsensitive);
+
+
+                converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
+                //converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "Copertina di" , "", Qt::CaseInsensitive );
+
+
+            QDomDocument doc;
+            QDomDocument::ParseResult result = doc.setContent( converted.toUtf8() );
+
+            //qWarning() << result.errorMessage;
+
+            if ( result )
+            {
+               //qWarning() << htmlData;
+                 Book book;
+
+                QDomNodeList titles = doc.elementsByTagName("h1"); //title
+
+                if ( titles.count() > 0 )
+                {
+                    QDomElement h1Element = titles.at(0).toElement();
+                    if (!h1Element.isNull())
+                    {
+                       QString text = h1Element.text().trimmed();
+
+                       QStringList parts = text.split(", di ");
+
+                        if ( parts.count() == 2 )
+                        {
+                            book.title_ita = parts.at(0).trimmed();
+                            book.title_orig = parts.at(0).trimmed();
+
+                            book.author = parts.at(1).trimmed();
+                            book.collana = m_nomeCollana;
+                            book.isDigital = false;
+                            book.owned = true;
+                            book.read = true;
+
+                            book.editore = "Zona 42";
+                            int index = m_library->getBooksCount() + 1;
+                            book.number = index;
+
+                           qWarning() << "Check'" <<  book.title_ita << "'";
+                           if ( m_library->exists( book ) )
+                           {
+                               qWarning() << "Book '" <<  book.title_ita << "' already in library";
+                               emit finished();
+                               return;
+                           }
+
+
+                            QRegularExpression wpClassRegex("\\bwp-image-\\w+\\b");
+
+                            QDomNodeList imgList = doc.elementsByTagName("img");
+                            for (int i = 0; i < imgList.count(); ++i)
+                            {
+                                QDomElement imgElement = imgList.at(i).toElement();
+                                if (imgElement.isNull()) continue;
+
+
+
+
+                                // Check if img has class attribute
+                                if (imgElement.hasAttribute("class"))
+                                {
+                                    QString classAttr = imgElement.attribute("class");
+
+
+                                    // Check if "size-full" is in the class list
+                                    if (wpClassRegex.match(classAttr).hasMatch())
+                                    {
+                                        QString address = imgElement.attribute("src");
+
+                                        book.cover_image_path = address;
+
+                                        downloadFile( address, "test.jpg");
+
+                                        QFile img( "test.jpg" );
+
+
+                                        if ( img.open( QIODevice::ReadOnly) )
+                                        {
+                                            book.cover_image = img.readAll();
+                                            img.close();
+                                        }
+                                        else
+                                        {
+                                            qWarning() << "Image does not exist" << address;
+                                        }
+
+
+                                        qWarning() << book.title_ita << book.author << book.cover_image_path;
+
+
+                                        break;
+                                    }
+
+                                }
+
+                           }
+
+                           QDomNodeList divs = doc.elementsByTagName("div"); //title
+
+                           for (int i = 0; i < divs.count(); ++i)
+                           {
+                                QDomElement divElement = divs.at(i).toElement();
+                                if (divElement.isNull()) continue;
+
+                                // Check if div has ID attribute
+                                if (divElement.hasAttribute("data-index"))
+                                {
+
+
+                                    QString dataIndex = divElement.attribute("data-index").trimmed();
+
+                                    //if ( dataIndex == "3")
+                                    {
+
+                                        qWarning() << "DATA" << dataIndex;
+
+                                        QString text = getInnerHtml( divElement );
+
+                                        book.synopsis += text;
+
+
+                                    }
+
+                                }
+
+                            }
+                            BookEditor editor( m_library, this );
+                            editor.setBook( &book );
+
+                            if ( editor.exec() )
+                            {
+                                m_library->addBook( book );
+                                m_currentBook = book;
+                                m_nomeCollana = book.collana;
+
+                                updateView();
+                                viewBook(book);
+
+                                qWarning() << "Saved";
+
+                            }
+
+
+                       }
+                    }
+
+                 }
+
+
+            }
+            else
+            {
+                qWarning() << result.errorMessage;
+            }
+        }
+
+        emit finished();
+
+    }
+
+    manager->deleteLater();
+
+
+    });
+
+    manager->get( request );
 }
 
 
@@ -1134,6 +1626,36 @@ void MainWindow::doDownloadList(const QStringList &list)
             qWarning() << "\nImporting " << url;
 
             doImportFromWeb( url );
+        }
+        else
+        {
+            qWarning() << "Finished all downloads";
+            count = 0;
+        }
+
+
+
+    });
+
+    emit finished();
+
+
+}
+
+void MainWindow::doDownloadListZona42(const QStringList &list)
+{
+
+    static int count = 0;
+
+    connect( this, &MainWindow::finished, this, [=](){
+
+        if ( count < list.size() )
+        {
+            QString url = list.at( count++ );
+
+            qWarning() << "\nImporting Zona42" << url;
+
+            doImportFromWebZona42( url );
         }
         else
         {

@@ -504,6 +504,8 @@
    <addaction name="actionImporta_csv"/>
    <addaction name="actionImport_from_web"/>
    <addaction name="actionImport_all"/>
+   <addaction name="actionImportFrom_web42"/>
+   <addaction name="actionAll_Zona42"/>
   </widget>
   <action name="actionPrevious">
    <property name="icon">
@@ -684,6 +686,33 @@
    </property>
    <property name="text">
     <string>Import all</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionAll_Zona42">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/import-all.svg</normaloff>:/images/import-all.svg</iconset>
+   </property>
+   <property name="text">
+    <string>All_Zona42</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionImportFrom_web42">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/import.svg</normaloff>:/images/import.svg</iconset>
+   </property>
+   <property name="text">
+    <string>importfrom_web42</string>
+   </property>
+   <property name="toolTip">
+    <string>importfrom_web42</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

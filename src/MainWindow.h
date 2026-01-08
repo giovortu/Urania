@@ -40,6 +40,7 @@ signals:
     void finished();
 
     void downloadList( const QStringList & list );
+    void downloadListZona42( const QStringList & list );
 
 public slots:
 
@@ -77,8 +78,12 @@ public slots:
 
     void onImportFromFile( );
     void onImportFromWeb( );
+    void onImportFromWebZona42();
     void doImportFromWeb( const QString & remote );
     void onImportAllFromWeb();
+
+    void onImportAllFromWebZona42();
+    void doImportFromWebZona42( const QString & remote );
 
 
 
@@ -112,6 +117,7 @@ public slots:
     bool parseHTML( const QString & filename );
 
     void doDownloadList( const QStringList & list );
+    void doDownloadListZona42( const QStringList & list );
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;

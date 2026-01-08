@@ -502,13 +502,14 @@ bool DbManager::exists(Book &book)
 
     int id = -1;
 
-    QString q = QString("SELECT number FROM books where title_ita = :title_ita AND author = :author;" );
+    QString q = QString("SELECT id FROM books where LOWER(title_ita) LIKE :title_ita AND LOWER(author) LIKE :author AND LOWER(collana) LIKE :collana;" );
 
     QSqlQuery query;
 
     query.prepare( q );
-    query.bindValue(":title_ita", book.title_ita);
-    query.bindValue(":author", book.author);
+    query.bindValue(":title_ita", book.title_ita.toLower());
+    query.bindValue(":author", book.author.toLower());
+    query.bindValue(":collana", book.collana.toLower());
 
     if(query.exec())
     {
@@ -517,6 +518,11 @@ bool DbManager::exists(Book &book)
             id = query.value( 0 ).toInt();
         }
     }
+    else
+    {
+        qWarning() << "ERRORE QUERY exists";
+    }
+
 
     return id != -1;
 
@@ -607,7 +613,7 @@ int DbManager::getBooksCount(bool global )
     {
         if(query.next())
         {
-            qWarning() <<  query.value( 0 ).toInt();
+            //qWarning() <<  query.value( 0 ).toInt();
             m_currentBookCount =  query.value( 0 ).toInt();
         }
     }
