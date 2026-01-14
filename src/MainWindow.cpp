@@ -494,6 +494,8 @@ void MainWindow::viewBook(Book &book)
     QPixmap pix;
     pix.loadFromData( book.cover_image, "JPEG" );
 
+    qWarning() << QString(QCryptographicHash::hash(( book.cover_image ),QCryptographicHash::Md5).toHex());
+
     m_cover_img->setPixmap( pix  );
 
     ui->owned->setChecked( book.owned );

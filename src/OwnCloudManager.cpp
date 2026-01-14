@@ -9,7 +9,7 @@ OwnCloudManager::OwnCloudManager(QObject *parent) : QObject(parent)
     // Set your OwnCloud credentials here
     username = "giovortu";
     password = "emilia.70";
-    serverUrl = "http://192.168.0.227:8080/remote.php/dav/files/giovortu/";
+    serverUrl = "http://192.168.0.227:8080/remote.php/dav/files/giovortu/Local/";
 
     networkManager = new QNetworkAccessManager(this);
 

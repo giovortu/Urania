@@ -137,6 +137,8 @@ bool Book::fromJson(const QJsonObject &obj)
     date_pub = QDate::fromString(obj["date_pub"].toString(), "yyyy-MM-dd");
     cover_author = obj["cover_author"].toString();
     cover_image = QByteArray::fromBase64( obj["cover_image"].toString().toLatin1() );
+
+
     synopsis = obj["synopsis"].toString();
     synopsis_image = QByteArray::fromBase64( obj["synopsis_image"].toString().toLatin1() );
 

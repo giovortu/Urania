@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
+#include <QCryptographicHash>
 #include "Book.h"
 
 

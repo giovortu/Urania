@@ -53,23 +53,27 @@ bool DbManager::createTables()
 
     QSqlQuery query;
 
-    query.prepare("CREATE TABLE IF NOT EXISTS books(number INTEGER, \
-                  title_ita TEXT, \
-                  title_orig TEXT, \
-                  author TEXT, \
-                  date_pub DATE, \
-                  cover_author TEXT, \
-                  cover_image BLOB, \
-                  synopsis TEXT, \
-                  synopsis_image BLOB, \
-                  owned BOOL, \
-                  stars INTEGER, \
-                  comment TEXT, \
-                  reprint BOOL, \
-                  read BOOL, \
-                  digital BOOL, \
-                  collana TEXT, \
-                  id INTEGER, PRIMARY KEY(id));");
+    query.prepare("CREATE TABLE books (\
+    number	INTEGER,\
+    title_ita	TEXT,\
+    title_orig	TEXT,\
+    author	TEXT,\
+    date_pub	DATE,\
+    cover_author	TEXT,\
+    cover_image	BLOB,\
+    synopsis	TEXT,\
+    synopsis_image	BLOB,\
+    owned	BOOL,\
+    stars	INTEGER,\
+    comment	TEXT,\
+    reprint	BOOL,\
+    read	BOOL,\
+    collana	TEXT,\
+    editore	TEXT,\
+    id	INTEGER,\
+    digital	BOOL, cover_hash TEXT, synopsis_hash TEXT,\
+    PRIMARY KEY(id);");
+
 
     if(query.exec())
     {
@@ -136,8 +140,8 @@ bool DbManager::addBook( Book &book)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana,editore,digital) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana,:editore,:digital)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana,editore,digital,cover_hash) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana,:editore,:digital,:cover_hash)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -155,6 +159,8 @@ bool DbManager::addBook( Book &book)
     query.bindValue(":collana", book.collana);
     query.bindValue(":editore", book.editore);
     query.bindValue(":digital", book.isDigital);
+
+    query.bindValue(":cover_hash", QCryptographicHash::hash(( book.cover_image ),QCryptographicHash::Md5).toHex() );
 
 
     if(query.exec())
@@ -359,6 +365,7 @@ bool DbManager::updateBook(Book *book)
             collana = :collana, \
             editore = :editore, \
             digital = :digital \
+            cover_hash = :cover_hash\
         WHERE id = :id;");
 
     query.bindValue(":id", book->id);
@@ -378,6 +385,7 @@ bool DbManager::updateBook(Book *book)
     query.bindValue(":collana", book->collana);
     query.bindValue(":editore", book->editore);
     query.bindValue(":digital", book->isDigital);
+    query.bindValue(":cover_hash", QCryptographicHash::hash(( book->cover_image ),QCryptographicHash::Md5).toHex() );
 
     if(query.exec())
     {
