@@ -20,9 +20,9 @@ RemoteDatabaseManager::RemoteDatabaseManager(QWidget *parent) :
 
     uploader = new OwnCloudManager( this );
 
-    connect( uploader, &OwnCloudManager::finished, this, &RemoteDatabaseManager::close );
+    connect( uploader, &OwnCloudManager::workFinished, this, &RemoteDatabaseManager::close );
 
-    connect( uploader, &OwnCloudManager::finished, this, &RemoteDatabaseManager::finished );
+    connect( uploader, &OwnCloudManager::workFinished, this, &RemoteDatabaseManager::finished );
 
 
 }
@@ -35,7 +35,7 @@ RemoteDatabaseManager::~RemoteDatabaseManager()
 void RemoteDatabaseManager::startUpload()
 {
 
-    QObject::connect( uploader, &OwnCloudManager::workProgress, [=](int progress, int total) {
+    QObject::connect( uploader, &OwnCloudManager::uploadProgress, [=](int progress, int total) {
 
         qreal relative = (qreal)progress / (qreal)total * 100;
 
@@ -45,7 +45,7 @@ void RemoteDatabaseManager::startUpload()
     });
 
 
-     QObject::connect( uploader, &OwnCloudManager::startingNext, [=]( const QString &str ) {
+     QObject::connect( uploader, &OwnCloudManager::workStarted, [=]( const QString &str ) {
          qDebug() << "Starting next upload: " << str;
          ui->label->setText("Uploading " + str + "...");
 
@@ -71,7 +71,7 @@ void RemoteDatabaseManager::startUpload()
 
 void RemoteDatabaseManager::startDownload()
 {
-    QObject::connect( uploader, &OwnCloudManager::workProgress, this, [=](int progress, int total) {
+    QObject::connect( uploader, &OwnCloudManager::downloadProgress, this, [=](int progress, int total) {
 
         qreal relative = (qreal)progress / (qreal)total * 100;
 
@@ -79,7 +79,7 @@ void RemoteDatabaseManager::startDownload()
 
     });
 
-    QObject::connect( uploader, &OwnCloudManager::startingNext, this, [=]( const QString &str ) {
+    QObject::connect( uploader, &OwnCloudManager::workStarted, this, [=]( const QString &str ) {
         qDebug() << "Starting next download: " << str;
         ui->label->setText("Downloading " + str + "...");
 
