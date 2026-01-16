@@ -132,7 +132,7 @@ void BookEditor::saveData()
     // Extract collana name from format "Collana (Editore)"
     QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
     QRegularExpressionMatch match = rx.match(collanaText);
-    if (match.hasMatched())
+    if (match.hasMatch())
     {
         book->collana = match.captured(1).trimmed();
         // Editore already set from editorCombo
