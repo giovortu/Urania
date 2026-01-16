@@ -199,6 +199,69 @@ L'editor dei libri è stato aggiornato per gestire il formato normalizzato:
 - ✅ **UI**: Le ComboBox mostrano il formato "Collana (Editore)"
 - ✅ **Fallback**: Gestione automatica di editori predefiniti quando necessario
 
+### Fase 4: Ottimizzazione - ID Interni (✅ Completata)
+
+#### Architettura Ottimizzata
+
+L'interfaccia utente ora utilizza un approccio più efficiente:
+
+**Prima (Fase 3):**
+- ComboBox mostrano stringhe
+- saveData() parsava le stringhe per estrarre nomi
+- addBook/updateBook chiamavano getOrCreateEditore/Collana per ottenere gli ID
+- Ricerca nel database per ogni salvataggio
+
+**Dopo (Fase 4):**
+- ✅ ComboBox mostrano stringhe ma memorizzano **ID come userData**
+- ✅ saveData() recupera direttamente gli ID con `currentData().toInt()`
+- ✅ `book->editore_id` e `book->collana_id` impostati immediatamente
+- ✅ **Zero ricerche** nel database durante il salvataggio
+
+#### Nuovi Metodi DbManager
+
+```cpp
+QMap<QString, int> getCollaneMap();  // "Collana (Editore)" -> collana_id
+QMap<QString, int> getEditoriMap();  // "Editore" -> editore_id
+```
+
+Questi metodi:
+- Eseguono una singola query con JOIN
+- Restituiscono tutte le coppie nome-ID
+- Vengono chiamati solo al popolamento delle ComboBox
+
+#### Implementazione BookEditor
+
+**populateCollana() e populateEditors():**
+```cpp
+QMap<QString, int> collaneMap = m_library->getCollaneMap();
+QMapIterator<QString, int> i(collaneMap);
+while (i.hasNext()) {
+    i.next();
+    ui.collanaCombo->addItem(i.key(), i.value()); // Text + ID
+}
+```
+
+**saveData():**
+```cpp
+book->editore_id = ui.editorCombo->currentData().toInt();
+book->collana_id = ui.collanaCombo->currentData().toInt();
+// Gli ID sono già disponibili, nessuna ricerca necessaria!
+```
+
+**addCollana() e addEditor():**
+- Creano direttamente nel database
+- Ottengono l'ID con `getOrCreateEditore/Collana`
+- Aggiungono alla ComboBox con ID come userData
+- Nessun refresh completo necessario
+
+#### Vantaggi
+
+1. **⚡ Performance**: Nessuna ricerca per nome durante il salvataggio
+2. **🎯 Accuratezza**: ID univoci eliminano ambiguità
+3. **💾 Riduzione Query**: Una query al caricamento invece di 2-3 per salvataggio
+4. **🔒 Affidabilità**: Nessuna dipendenza da parsing di stringhe
+5. **✨ Semplicità**: Codice più pulito e manutenibile
+
 ## Note Importanti
 
 ### Compatibilità
