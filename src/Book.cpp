@@ -230,7 +230,6 @@ bool Book::fromHTML(const QString &path)
 {
 
 
-
     QFileInfo fileInfo(path);
 
     QString root = fileInfo.absolutePath();
@@ -442,7 +441,17 @@ bool Book::fromHTML(const QString &path)
                         }
                         break;
 
-                        case 3: break;
+                        case 3:
+                        {
+                            QString text = findTextValue( cells.at(0) );
+                            if ( !text.isEmpty())
+                            {
+                                synopsis = text;
+                            }
+
+
+                        }
+                            break;
 
                         case 4:
                         {
@@ -466,7 +475,9 @@ bool Book::fromHTML(const QString &path)
                             }
                             else
                             {
-                                synopsis = text;
+                                if( synopsis.isEmpty() )
+                                    synopsis = text;
+
                                 //qWarning() << "Synopsis:" << synopsis;
                             }
 

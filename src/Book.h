@@ -47,15 +47,15 @@ public:
     bool fromHTML( const QString &path );
 
 
-    int number;
-    QString title_ita;
-    QString title_orig;
-    QString author;
+    int number =  -1;
+    QString title_ita = "";
+    QString title_orig = "";
+    QString author = "";
     QDate date_pub;
-    QString cover_author;
+    QString cover_author = "";
     QByteArray cover_image;
 
-    QString synopsis;
+    QString synopsis = "";
     QByteArray synopsis_image;
 
 
