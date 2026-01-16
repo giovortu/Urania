@@ -109,14 +109,14 @@ bool DbManager::createTables()
     comment	TEXT,\
     reprint	BOOL,\
     read	BOOL,\
-    collana	TEXT,\
-    editore	TEXT,\
     id	INTEGER,\
     digital	BOOL,\
     cover_hash TEXT,\
     synopsis_hash TEXT,\
     editore_id INTEGER,\
     collana_id INTEGER,\
+    FOREIGN KEY(editore_id) REFERENCES editori(id),\
+    FOREIGN KEY(collana_id) REFERENCES collane(id),\
     PRIMARY KEY(id)\
     );");
 
@@ -201,8 +201,8 @@ bool DbManager::addBook( Book &book)
     book.synopsis_hash = QCryptographicHash::hash(book.synopsis_image, QCryptographicHash::Md5).toHex();
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,collana,editore,digital,cover_hash,synopsis_hash,editore_id,collana_id) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:collana,:editore,:digital,:cover_hash,:synopsis_hash,:editore_id,:collana_id)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,digital,cover_hash,synopsis_hash,editore_id,collana_id) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:digital,:cover_hash,:synopsis_hash,:editore_id,:collana_id)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -217,8 +217,6 @@ bool DbManager::addBook( Book &book)
     query.bindValue(":stars", book.stars);
     query.bindValue(":comment", book.comment);
     query.bindValue(":read", book.read);
-    query.bindValue(":collana", book.collana);
-    query.bindValue(":editore", book.editore);
     query.bindValue(":digital", book.isDigital);
     query.bindValue(":cover_hash", book.cover_hash);
     query.bindValue(":synopsis_hash", book.synopsis_hash);
@@ -1012,57 +1010,10 @@ int DbManager::getOrCreateCollana(const QString &nome, int editore_id)
 
 bool DbManager::migrateStringToRelational()
 {
-    QSqlQuery query;
-    
-    // Get all books that have string values but missing IDs
-    query.prepare("SELECT b.id, e.nome as editore, c.nome as collana FROM books b LEFT JOIN editori e ON b.editore_id = e.id LEFT JOIN collane c ON b.collana_id = c.id WHERE (b.editore IS NOT NULL AND b.editore_id IS NULL) OR (b.collana IS NOT NULL AND b.collana_id IS NULL)");
-    
-    if (!query.exec())
-    {
-        qDebug() << "Error fetching books for migration:" << query.lastError();
-        return false;
-    }
-    
-    QSqlDatabase::database().transaction();
-    
-    while (query.next())
-    {
-        int book_id = query.value(0).toInt();
-        QString editore_str = query.value(1).toString();
-        QString collana_str = query.value(2).toString();
-        
-        int editore_id = -1;
-        int collana_id = -1;
-        
-        // Get or create editore
-        if (!editore_str.isEmpty())
-        {
-            editore_id = getOrCreateEditore(editore_str);
-        }
-        
-        // Get or create collana
-        if (!collana_str.isEmpty() && editore_id > 0)
-        {
-            collana_id = getOrCreateCollana(collana_str, editore_id);
-        }
-        
-        // Update book with IDs
-        QSqlQuery updateQuery;
-        updateQuery.prepare("UPDATE books SET editore_id = :editore_id, collana_id = :collana_id WHERE id = :id");
-        updateQuery.bindValue(":editore_id", editore_id > 0 ? editore_id : QVariant());
-        updateQuery.bindValue(":collana_id", collana_id > 0 ? collana_id : QVariant());
-        updateQuery.bindValue(":id", book_id);
-        
-        if (!updateQuery.exec())
-        {
-            qDebug() << "Error updating book" << book_id << ":" << updateQuery.lastError();
-            QSqlDatabase::database().rollback();
-            return false;
-        }
-    }
-    
-    QSqlDatabase::database().commit();
-    qDebug() << "Migration completed successfully";
+    // This function is no longer needed as collana and editore columns 
+    // have been removed from the books table.
+    // All data must use editore_id and collana_id with JOIN to normalized tables.
+    qDebug() << "Migration function is obsolete - books table now uses only normalized IDs";
     return true;
 }
 
