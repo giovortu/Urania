@@ -182,6 +182,23 @@ Tutte le query che filtravano per `collana` ora usano `collana_id`:
 3. **Manutenzione**: Rinominare editore/collana aggiorna automaticamente tutti i libri
 4. **Relazioni**: Le foreign key garantiscono coerenza referenziale
 
+### Fase 3: Aggiornamento Interfaccia Utente (✅ Completata)
+
+#### BookEditor
+
+L'editor dei libri è stato aggiornato per gestire il formato normalizzato:
+
+- ✅ **setBook()**: Riconosce il formato "Collana (Editore)" e preseleziona sia la collana che l'editore
+- ✅ **saveData()**: Estrae automaticamente collana ed editore dal formato combinato
+- ✅ **addCollana()**: Richiede che un editore sia selezionato, crea nel formato "Collana (Editore)"
+- ✅ **addEditor()**: Aggiorna automaticamente la lista degli editori dopo l'aggiunta
+
+#### MainWindow
+
+- ✅ **Importazione**: Parsing del formato "Collana (Editore)" per estrarre i valori separati
+- ✅ **UI**: Le ComboBox mostrano il formato "Collana (Editore)"
+- ✅ **Fallback**: Gestione automatica di editori predefiniti quando necessario
+
 ## Note Importanti
 
 ### Compatibilità
