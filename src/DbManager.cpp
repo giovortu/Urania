@@ -625,7 +625,7 @@ int DbManager::getBookById(int id, Book &book)
     int retval = -1;
 
     QSqlQuery query;
-    query.prepare("SELECT * FROM books WHERE id = :id");
+    query.prepare("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.id = :id");
 
     query.bindValue(":id", id);
 
@@ -787,7 +787,7 @@ QList<Book> DbManager::getOwnedBooks()
 {
     QList<Book> books;
     QSqlQuery query;
-    query.prepare("SELECT * FROM books WHERE owned = true AND collana_id = :collana_id");
+    query.prepare("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.owned = true AND b.collana_id = :collana_id");
     query.bindValue(":collana_id", m_collana_id);
     if(query.exec())
     {
@@ -809,7 +809,7 @@ QList<Book> DbManager::getReadBooks()
 {
     QList<Book> books;
     QSqlQuery query;
-    query.prepare("SELECT * FROM books WHERE read = true AND collana_id = :collana_id");
+    query.prepare("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.read = true AND b.collana_id = :collana_id");
     query.bindValue(":collana_id", m_collana_id);
     if(query.exec())
     {
@@ -846,8 +846,8 @@ QStringList DbManager::getCollane()
     else
     {
         qDebug() << "Error getting collane:" << query.lastError();
-        // Fallback to old method if normalized tables don't exist yet
-        query.prepare("SELECT DISTINCT collana FROM books WHERE collana IS NOT NULL ORDER BY collana;");
+        // Fallback: get collane from books via JOIN
+        query.prepare("SELECT DISTINCT c.nome FROM books b INNER JOIN collane c ON b.collana_id = c.id WHERE b.collana_id IS NOT NULL ORDER BY c.nome;");
         if(query.exec())
         {
             while (query.next())
@@ -879,8 +879,8 @@ QStringList DbManager::getEditors()
     else
     {
         qDebug() << "Error getting editori:" << query.lastError();
-        // Fallback to old method if normalized tables don't exist yet
-        query.prepare("SELECT DISTINCT editore FROM books WHERE editore IS NOT NULL ORDER BY editore;");
+        // Fallback: get editori from books via JOIN
+        query.prepare("SELECT DISTINCT e.nome FROM books b INNER JOIN editori e ON b.editore_id = e.id WHERE b.editore_id IS NOT NULL ORDER BY e.nome;");
         if(query.exec())
         {
             while (query.next())
@@ -1014,8 +1014,8 @@ bool DbManager::migrateStringToRelational()
 {
     QSqlQuery query;
     
-    // Get all books with non-null editore/collana strings
-    query.prepare("SELECT id, editore, collana FROM books WHERE editore IS NOT NULL OR collana IS NOT NULL");
+    // Get all books that have string values but missing IDs
+    query.prepare("SELECT b.id, e.nome as editore, c.nome as collana FROM books b LEFT JOIN editori e ON b.editore_id = e.id LEFT JOIN collane c ON b.collana_id = c.id WHERE (b.editore IS NOT NULL AND b.editore_id IS NULL) OR (b.collana IS NOT NULL AND b.collana_id IS NULL)");
     
     if (!query.exec())
     {
@@ -1108,18 +1108,8 @@ void DbManager::setCollana(const QString &collana)
     }
     else
     {
-        // Fallback: try to find by string match in books table
-        query.prepare("SELECT DISTINCT collana_id FROM books WHERE collana = :collana AND collana_id IS NOT NULL LIMIT 1");
-        query.bindValue(":collana", collanaName);
-        if (query.exec() && query.next())
-        {
-            m_collana_id = query.value(0).toInt();
-        }
-        else
-        {
-            m_collana_id = -1;
-            qDebug() << "Could not find collana_id for:" << collana;
-        }
+        m_collana_id = -1;
+        qDebug() << "Could not find collana_id for:" << collana;
     }
 }
 
@@ -1141,8 +1131,11 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.comment =           query.value( query.record().indexOf("comment") ).toString();
     book.reprint =           query.value( query.record().indexOf("reprint") ).toBool();
     book.read =              query.value( query.record().indexOf("read") ).toBool();
-    book.collana =           query.value( query.record().indexOf("collana") ).toString();
-    book.editore =           query.value( query.record().indexOf("editore") ).toString();
+    // collana and editore strings are populated from JOIN if available
+    int collana_idx = query.record().indexOf("collana");
+    int editore_idx = query.record().indexOf("editore");
+    book.collana = (collana_idx >= 0) ? query.value(collana_idx).toString() : QString();
+    book.editore = (editore_idx >= 0) ? query.value(editore_idx).toString() : QString();
     book.id     =            query.value( query.record().indexOf("id") ).toInt();
     book.isDigital=          query.value( query.record().indexOf("digital") ).toBool();
     
@@ -1174,12 +1167,12 @@ QString DbManager::searchBooks(const QString &text, const QString & field, QList
 
     if ( field == "indici" )
     {
-        stQuery =QString("SELECT * FROM books WHERE id IN ( SELECT id FROM indexes WHERE title LIKE '%%1%'  )").arg( _text );
+        stQuery =QString("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.id IN ( SELECT id FROM indexes WHERE title LIKE '%%1%'  )").arg( _text );
 
     }
     else
     {
-        stQuery = QString("SELECT id FROM books WHERE %1 LIKE '%%2%';").arg( field, _text );
+        stQuery = QString("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.%1 LIKE '%%2%';").arg( field, _text );
     }
 
     QSqlQuery query;
