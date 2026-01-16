@@ -1021,11 +1021,11 @@ void DbManager::setCollana(const QString &collana)
 {
     m_collana = collana;
     
-    // Extract collana name from format \"Collana (Editore)\" if needed
+    // Extract collana name from format "Collana (Editore)" if needed
     QString collanaName = collana;
     QString editoreName;
     
-    QRegularExpression rx(\"^(.+?)\\s*\\((.+?)\\)$\");
+    QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
     QRegularExpressionMatch match = rx.match(collana);
     if (match.hasMatch())
     {
@@ -1038,7 +1038,39 @@ void DbManager::setCollana(const QString &collana)
     if (!editoreName.isEmpty())
     {
         // Search with both collana and editore
-        query.prepare(\"SELECT c.id FROM collane c \"\n                     \"JOIN editori e ON c.editore_id = e.id \"\n                     \"WHERE c.nome = :collana AND e.nome = :editore\");\n        query.bindValue(\":collana\", collanaName);\n        query.bindValue(\":editore\", editoreName);\n    }\n    else\n    {\n        // Search by collana name only (might return first match if multiple)\n        query.prepare(\"SELECT id FROM collane WHERE nome = :collana LIMIT 1\");\n        query.bindValue(\":collana\", collanaName);\n    }\n    \n    if (query.exec() && query.next())\n    {\n        m_collana_id = query.value(0).toInt();\n    }\n    else\n    {\n        // Fallback: try to find by string match in books table\n        query.prepare(\"SELECT DISTINCT collana_id FROM books WHERE collana = :collana AND collana_id IS NOT NULL LIMIT 1\");\n        query.bindValue(\":collana\", collanaName);\n        if (query.exec() && query.next())\n        {\n            m_collana_id = query.value(0).toInt();\n        }\n        else\n        {\n            m_collana_id = -1;\n            qDebug() << \"Could not find collana_id for:\" << collana;\n        }\n    }\n}
+        query.prepare("SELECT c.id FROM collane c "
+                     "JOIN editori e ON c.editore_id = e.id "
+                     "WHERE c.nome = :collana AND e.nome = :editore");
+        query.bindValue(":collana", collanaName);
+        query.bindValue(":editore", editoreName);
+    }
+    else
+    {
+        // Search by collana name only (might return first match if multiple)
+        query.prepare("SELECT id FROM collane WHERE nome = :collana LIMIT 1");
+        query.bindValue(":collana", collanaName);
+    }
+    
+    if (query.exec() && query.next())
+    {
+        m_collana_id = query.value(0).toInt();
+    }
+    else
+    {
+        // Fallback: try to find by string match in books table
+        query.prepare("SELECT DISTINCT collana_id FROM books WHERE collana = :collana AND collana_id IS NOT NULL LIMIT 1");
+        query.bindValue(":collana", collanaName);
+        if (query.exec() && query.next())
+        {
+            m_collana_id = query.value(0).toInt();
+        }
+        else
+        {
+            m_collana_id = -1;
+            qDebug() << "Could not find collana_id for:" << collana;
+        }
+    }
+}
 
 Book DbManager::bookFromQuery( QSqlQuery &query )
 {
