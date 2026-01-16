@@ -982,7 +982,7 @@ void MainWindow::doImportFromWeb( const QString & remote )
                             // Parse collana format "Collana (Editore)"
                             QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
                             QRegularExpressionMatch match = rx.match(m_nomeCollana);
-                            if (match.hasMatched())
+                            if (match.hasMatch())
                             {
                                 book.collana = match.captured(1).trimmed();
                                 book.editore = match.captured(2).trimmed();
@@ -1466,7 +1466,7 @@ void MainWindow::doImportFromWebZona42(const QString &remote)
                             // Parse collana format "Collana (Editore)"
                             QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
                             QRegularExpressionMatch match = rx.match(m_nomeCollana);
-                            if (match.hasMatched())
+                            if (match.hasMatch())
                             {
                                 book.collana = match.captured(1).trimmed();
                                 book.editore = match.captured(2).trimmed();
