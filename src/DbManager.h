@@ -78,6 +78,7 @@ private:
     int m_currentBookCount = -1;
 
     QString m_collana;
+    int m_collana_id;
 
     QString m_dbFile;
 

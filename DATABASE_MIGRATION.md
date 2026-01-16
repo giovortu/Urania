@@ -2,9 +2,11 @@
 
 ## Modifiche Implementate
 
-### Nuove Tabelle
+### Fase 1: Normalizzazione Database (✅ Completata)
 
-#### `editori`
+#### Nuove Tabelle
+
+##### `editori`
 ```sql
 CREATE TABLE editori (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,3 +139,79 @@ Prima di usare in produzione:
 - Le foreign key non sono enforced di default in SQLite (serve `PRAGMA foreign_keys = ON`)
 - La migrazione usa transazioni per garantire atomicità
 - ID negativi o 0 indicano valori NULL/non impostati
+
+### Fase 2: Utilizzo ID Relazionali nel Codice (✅ Completata)
+
+#### Modifiche alle Query
+
+Tutte le query che filtravano per `collana` ora usano `collana_id`:
+
+- ✅ `getBooksCount()` - usa `WHERE collana_id = :collana_id`
+- ✅ `getOwnedCount()` - usa `WHERE owned = true AND collana_id = :collana_id`
+- ✅ `getReadCount()` - usa `WHERE read = true AND collana_id = :collana_id`
+- ✅ `getDigitalCount()` - usa `WHERE digital = true AND collana_id = :collana_id`
+- ✅ `getOwnedBooks()` - usa `WHERE owned = true AND collana_id = :collana_id`
+- ✅ `getReadBooks()` - usa `WHERE read = true AND collana_id = :collana_id`
+- ✅ `getBook()` - usa `WHERE collana_id = :collana_id`
+- ✅ `getBookById()` - usa `WHERE collana_id = :collana_id`
+- ✅ `exists()` - usa `AND collana_id = :collana_id`
+- ✅ `updateOwn()` - usa `WHERE collana_id = :collana_id AND number = :number`
+
+#### Modifiche ai Metodi di Ricerca
+
+- ✅ `getCollane()` - legge dalla tabella normalizzata `collane` con JOIN su `editori`
+  - Formato output: "Nome Collana (Nome Editore)"
+  - Include fallback per compatibilità con database non migrati
+  
+- ✅ `getEditors()` - legge dalla tabella normalizzata `editori`
+  - Include fallback per compatibilità con database non migrati
+
+#### Gestione Collana Corrente
+
+- ✅ Aggiunto campo `int m_collana_id` in `DbManager`
+- ✅ `setCollana()` aggiornato per:
+  - Parsare il formato "Collana (Editore)"
+  - Ricercare l'ID dalla tabella `collane`
+  - Memorizzare sia la stringa che l'ID
+  - Gestire fallback su database non migrati
+
+#### Vantaggi dell'Uso degli ID
+
+1. **Performance**: Le query con ID integer sono più veloci delle LIKE su stringhe
+2. **Integrità**: Non ci sono più problemi con case-sensitivity o spazi
+3. **Manutenzione**: Rinominare editore/collana aggiorna automaticamente tutti i libri
+4. **Relazioni**: Le foreign key garantiscono coerenza referenziale
+
+## Note Importanti
+
+### Compatibilità
+
+Il codice mantiene **doppio supporto**:
+- I campi string `editore` e `collana` sono ancora popolati
+- Gli ID `editore_id` e `collana_id` sono ora utilizzati per le query
+- Fallback automatico se le tabelle normalizzate non esistono
+
+### Migrazione Richiesta
+
+Dopo l'aggiornamento del codice, è **necessario eseguire**:
+
+```cpp
+DbManager db("/path/to/database/books.dba");
+db.createTables(); // Crea editori e collane se non esistono
+db.migrateStringToRelational(); // Popola editore_id e collana_id
+```
+
+Questo popola i campi ID per i libri esistenti.
+
+### Formato Collane
+
+Le collane sono ora visualizzate nel formato:
+```
+Nome Collana (Nome Editore)
+```
+
+Ad esempio:
+- "Urania (Mondadori)"
+- "I Gialli (Einaudi)"
+
+Il metodo `setCollana()` gestisce automaticamente questo formato.
