@@ -32,6 +32,10 @@ public:
 
     QStringList getCollane();
     QStringList getEditors();
+    
+    // Get ID mappings for UI
+    QMap<QString, int> getCollaneMap();
+    QMap<QString, int> getEditoriMap();
 
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();
@@ -55,6 +59,9 @@ public slots:
     bool updateBookIsDigital(int id, bool digital);
 
     bool updateBook( Book *book );
+    
+    // Accessor for direct database operations
+    DbManager* getDbManager() { return m_books; }
 
 protected:
     DbManager *m_books;

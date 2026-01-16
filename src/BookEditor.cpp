@@ -56,20 +56,49 @@ void BookEditor::setBook( Book *book)
     ui.reprintCheckbox->setChecked(book->reprint);
     ui.readCheckbox->setChecked(book->read);
     
-    // Set editore first
-    ui.editorCombo->setCurrentText(book->editore);
-    
-    // For collana, try to find the entry with format "Collana (Editore)"
-    QString collanaWithEditor = QString("%1 (%2)").arg(book->collana, book->editore);
-    int collanaIndex = ui.collanaCombo->findText(collanaWithEditor);
-    if (collanaIndex >= 0)
+    // Set editore by finding the item with matching ID
+    if (book->editore_id > 0)
     {
-        ui.collanaCombo->setCurrentIndex(collanaIndex);
+        for (int i = 0; i < ui.editorCombo->count(); i++)
+        {
+            if (ui.editorCombo->itemData(i).toInt() == book->editore_id)
+            {
+                ui.editorCombo->setCurrentIndex(i);
+                break;
+            }
+        }
     }
     else
     {
-        // Fallback to collana name only
-        ui.collanaCombo->setCurrentText(book->collana);
+        // Fallback: set by text
+        ui.editorCombo->setCurrentText(book->editore);
+    }
+    
+    // Set collana by finding the item with matching ID
+    if (book->collana_id > 0)
+    {
+        for (int i = 0; i < ui.collanaCombo->count(); i++)
+        {
+            if (ui.collanaCombo->itemData(i).toInt() == book->collana_id)
+            {
+                ui.collanaCombo->setCurrentIndex(i);
+                break;
+            }
+        }
+    }
+    else
+    {
+        // Fallback: try to find by formatted text "Collana (Editore)"
+        QString collanaWithEditor = QString("%1 (%2)").arg(book->collana, book->editore);
+        int collanaIndex = ui.collanaCombo->findText(collanaWithEditor);
+        if (collanaIndex >= 0)
+        {
+            ui.collanaCombo->setCurrentIndex(collanaIndex);
+        }
+        else
+        {
+            ui.collanaCombo->setCurrentText(book->collana);
+        }
     }
 
     ui.isDigitalCheck->setChecked( book->isDigital );
@@ -92,26 +121,26 @@ void BookEditor::saveData()
     book->reprint = ui.reprintCheckbox->isChecked();
     book->read = ui.readCheckbox->isChecked();
     
-    // Extract collana and editore from combo boxes
-    QString collanaText = ui.collanaCombo->currentText();
-    QString editoreText = ui.editorCombo->currentText();
+    // Get editore_id and editore from combo box
+    book->editore_id = ui.editorCombo->currentData().toInt();
+    book->editore = ui.editorCombo->currentText();
     
-    // Parse collana if it contains format "Collana (Editore)"
+    // Get collana_id and collana from combo box
+    book->collana_id = ui.collanaCombo->currentData().toInt();
+    QString collanaText = ui.collanaCombo->currentText();
+    
+    // Extract collana name from format "Collana (Editore)"
     QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
     QRegularExpressionMatch match = rx.match(collanaText);
     if (match.hasMatched())
     {
         book->collana = match.captured(1).trimmed();
-        book->editore = match.captured(2).trimmed();
+        // Editore already set from editorCombo
     }
     else
     {
         book->collana = collanaText;
-        book->editore = editoreText;
     }
-    
-    // Get or create editore_id and collana_id
-    // These will be automatically handled by addBook/updateBook in DbManager
 
     book->isDigital = ui.isDigitalCheck->isChecked();
 
@@ -146,30 +175,35 @@ void BookEditor::addCollana()
     QString newCollana = QInputDialog::getText(this, tr("New Collana"), tr("Collana name:"));
     if ( !newCollana.isEmpty() )
     {
-        // Get current editore from combo
+        // Get current editore_id from combo
+        int editore_id = ui.editorCombo->currentData().toInt();
         QString editore = ui.editorCombo->currentText();
         
-        if (editore.isEmpty())
+        if (editore_id <= 0 || editore.isEmpty())
         {
             QMessageBox::warning(this, tr("Missing Editor"), 
                 tr("Please select or add an editor first before creating a collana."));
             return;
         }
         
-        // Create the collana in database (will be done via DbManager)
-        // Format: "Collana (Editore)"
-        QString collanaWithEditor = QString("%1 (%2)").arg(newCollana, editore);
+        // Create the collana in database and get its ID
+        DbManager* db = m_library->getDbManager();
+        int collana_id = db->getOrCreateCollana(newCollana, editore_id);
         
-        // Refresh the list and add the new item
-        populateCollana();
-        
-        // Check if already exists after refresh
-        int idx = ui.collanaCombo->findText(collanaWithEditor);
-        if (idx < 0)
+        if (collana_id > 0)
         {
-            ui.collanaCombo->addItem(collanaWithEditor);
+            // Format: "Collana (Editore)"
+            QString collanaWithEditor = QString("%1 (%2)").arg(newCollana, editore);
+            
+            // Add to combo with ID as userData
+            ui.collanaCombo->addItem(collanaWithEditor, collana_id);
+            ui.collanaCombo->setCurrentIndex(ui.collanaCombo->count() - 1);
         }
-        ui.collanaCombo->setCurrentText(collanaWithEditor);
+        else
+        {
+            QMessageBox::warning(this, tr("Error"), 
+                tr("Failed to create collana in database."));
+        }
     }
 }
 
@@ -178,38 +212,48 @@ void BookEditor::addEditor()
     QString newEditor = QInputDialog::getText(this, tr("New editor"), tr("Editor name:"));
     if ( !newEditor.isEmpty() )
     {
-        // The editor will be created in database via getOrCreateEditore
-        // when saving the book
+        // Create the editor in database and get its ID
+        DbManager* db = m_library->getDbManager();
+        int editore_id = db->getOrCreateEditore(newEditor);
         
-        // Refresh the list
-        populateEditors();
-        
-        // Check if already exists after refresh
-        int idx = ui.editorCombo->findText(newEditor);
-        if (idx < 0)
+        if (editore_id > 0)
         {
-            ui.editorCombo->addItem(newEditor);
+            // Add to combo with ID as userData
+            ui.editorCombo->addItem(newEditor, editore_id);
+            ui.editorCombo->setCurrentIndex(ui.editorCombo->count() - 1);
         }
-        ui.editorCombo->setCurrentText(newEditor);
+        else
+        {
+            QMessageBox::warning(this, tr("Error"), 
+                tr("Failed to create editor in database."));
+        }
     }
 }
 
 void BookEditor::populateCollana()
 {
     ui.collanaCombo->clear();
-    QStringList collane = m_library->getCollane();
-    foreach( QString collana, collane )
+    QMap<QString, int> collaneMap = m_library->getCollaneMap();
+    
+    QMapIterator<QString, int> i(collaneMap);
+    while (i.hasNext())
     {
-        ui.collanaCombo->addItem(collana);
+        i.next();
+        // Display: "Collana (Editore)", Data: collana_id
+        ui.collanaCombo->addItem(i.key(), i.value());
     }
 }
 
 void BookEditor::populateEditors()
 {
     ui.editorCombo->clear();
-    QStringList editors = m_library->getEditors();
-    foreach( QString editor, editors )
+    QMap<QString, int> editoriMap = m_library->getEditoriMap();
+    
+    QMapIterator<QString, int> i(editoriMap);
+    while (i.hasNext())
     {
-        ui.editorCombo->addItem(editor);
+        i.next();
+        // Display: "Editore", Data: editore_id
+        ui.editorCombo->addItem(i.key(), i.value());
     }
 }

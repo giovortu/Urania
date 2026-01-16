@@ -79,6 +79,16 @@ QStringList Library::getEditors()
     return m_books->getEditors();
 }
 
+QMap<QString, int> Library::getCollaneMap()
+{
+    return m_books->getCollaneMap();
+}
+
+QMap<QString, int> Library::getEditoriMap()
+{
+    return m_books->getEditoriMap();
+}
+
 QList<Book> Library::getOwnedBooks()
 {
     return m_books->getOwnedBooks();

@@ -895,6 +895,57 @@ QStringList DbManager::getEditors()
     return data;
 }
 
+QMap<QString, int> DbManager::getCollaneMap()
+{
+    QMap<QString, int> data;
+    QSqlQuery query;
+    query.prepare("SELECT c.id, c.nome, e.nome FROM collane c "
+                  "JOIN editori e ON c.editore_id = e.id "
+                  "ORDER BY e.nome, c.nome;");
+
+    if(query.exec())
+    {
+        while (query.next())
+        {
+            int collana_id = query.value(0).toInt();
+            QString collana = query.value(1).toString();
+            QString editore = query.value(2).toString();
+            // Format: "Collana (Editore)" -> collana_id
+            QString key = QString("%1 (%2)").arg(collana, editore);
+            data[key] = collana_id;
+        }
+    }
+    else
+    {
+        qDebug() << "Error getting collane map:" << query.lastError();
+    }
+
+    return data;
+}
+
+QMap<QString, int> DbManager::getEditoriMap()
+{
+    QMap<QString, int> data;
+    QSqlQuery query;
+    query.prepare("SELECT id, nome FROM editori ORDER BY nome;");
+
+    if(query.exec())
+    {
+        while (query.next())
+        {
+            int editore_id = query.value(0).toInt();
+            QString editore = query.value(1).toString();
+            data[editore] = editore_id;
+        }
+    }
+    else
+    {
+        qDebug() << "Error getting editori map:" << query.lastError();
+    }
+
+    return data;
+}
+
 int DbManager::getOrCreateEditore(const QString &nome)
 {
     if (nome.isEmpty())

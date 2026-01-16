@@ -31,7 +31,10 @@ public:
     QStringList getCollane();
     QStringList getEditors();
 
-    // Normalized database methods
+    // Normalized database methods - get ID mappings
+    QMap<QString, int> getCollaneMap();  // Returns "Collana (Editore)" -> collana_id
+    QMap<QString, int> getEditoriMap();  // Returns "Editore" -> editore_id
+    
     int getOrCreateEditore(const QString &nome);
     int getOrCreateCollana(const QString &nome, int editore_id);
     bool migrateStringToRelational();
