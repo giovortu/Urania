@@ -26,6 +26,8 @@ signals:
     void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
+    void finished();
+
 private slots:
     void onAuthenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator);
 

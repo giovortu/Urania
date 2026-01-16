@@ -20,9 +20,9 @@ RemoteDatabaseManager::RemoteDatabaseManager(QWidget *parent) :
 
     uploader = new OwnCloudManager( this );
 
-    connect( uploader, &OwnCloudManager::workFinished, this, &RemoteDatabaseManager::close );
+    connect( uploader, &OwnCloudManager::finished, this, &RemoteDatabaseManager::close );
 
-    connect( uploader, &OwnCloudManager::workFinished, this, &RemoteDatabaseManager::finished );
+    connect( uploader, &OwnCloudManager::finished, this, &RemoteDatabaseManager::finished );
 
 
 }

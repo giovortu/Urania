@@ -119,7 +119,7 @@ void OwnCloudManager::startNextUpload()
     if (m_status != tStatus::eIdle) return;
 
     if (uploadQueue.isEmpty()) {
-        if (!downloadQueue.isEmpty()) startNextDownload();
+        emit finished();
         return;
     }
 
@@ -188,7 +188,7 @@ void OwnCloudManager::startNextDownload()
 {
      if (m_status != tStatus::eIdle) return;
      if (downloadQueue.isEmpty()) {
-         if(!uploadQueue.isEmpty()) startNextUpload();
+         emit finished();
          return;
      }
      QPair<QString, QString> job = downloadQueue.dequeue();
