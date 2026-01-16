@@ -126,6 +126,12 @@ Book::Book()
     editore = "";
     reprint = false;
     read = false;
+    
+    // Initialize new fields
+    editore_id = -1;
+    collana_id = -1;
+    cover_hash = "";
+    synopsis_hash = "";
 }
 
 bool Book::fromJson(const QJsonObject &obj)

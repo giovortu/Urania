@@ -76,6 +76,12 @@ public:
     QString collana;
     QString editore;
 
+    // Normalized database fields
+    int editore_id;
+    int collana_id;
+    QString cover_hash;
+    QString synopsis_hash;
+
     //support
     QString cover_image_path;
 

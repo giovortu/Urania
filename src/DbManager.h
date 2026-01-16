@@ -31,6 +31,11 @@ public:
     QStringList getCollane();
     QStringList getEditors();
 
+    // Normalized database methods
+    int getOrCreateEditore(const QString &nome);
+    int getOrCreateCollana(const QString &nome, int editore_id);
+    bool migrateStringToRelational();
+
     void reopen();
     void open( const QString &newDB );
     void close();
