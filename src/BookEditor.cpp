@@ -1,5 +1,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QMessageBox>
+#include <QRegularExpression>
 #include <QFile>
 
 #include "Library.h"
@@ -53,8 +55,22 @@ void BookEditor::setBook( Book *book)
     ui.commentEdit->setText(book->comment);
     ui.reprintCheckbox->setChecked(book->reprint);
     ui.readCheckbox->setChecked(book->read);
-    ui.collanaCombo->setCurrentText(book->collana);
+    
+    // Set editore first
     ui.editorCombo->setCurrentText(book->editore);
+    
+    // For collana, try to find the entry with format "Collana (Editore)"
+    QString collanaWithEditor = QString("%1 (%2)").arg(book->collana, book->editore);
+    int collanaIndex = ui.collanaCombo->findText(collanaWithEditor);
+    if (collanaIndex >= 0)
+    {
+        ui.collanaCombo->setCurrentIndex(collanaIndex);
+    }
+    else
+    {
+        // Fallback to collana name only
+        ui.collanaCombo->setCurrentText(book->collana);
+    }
 
     ui.isDigitalCheck->setChecked( book->isDigital );
 
@@ -75,8 +91,27 @@ void BookEditor::saveData()
     book->comment = ui.commentEdit->toPlainText();
     book->reprint = ui.reprintCheckbox->isChecked();
     book->read = ui.readCheckbox->isChecked();
-    book->collana = ui.collanaCombo->currentText();
-    book->editore = ui.editorCombo->currentText();
+    
+    // Extract collana and editore from combo boxes
+    QString collanaText = ui.collanaCombo->currentText();
+    QString editoreText = ui.editorCombo->currentText();
+    
+    // Parse collana if it contains format "Collana (Editore)"
+    QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
+    QRegularExpressionMatch match = rx.match(collanaText);
+    if (match.hasMatched())
+    {
+        book->collana = match.captured(1).trimmed();
+        book->editore = match.captured(2).trimmed();
+    }
+    else
+    {
+        book->collana = collanaText;
+        book->editore = editoreText;
+    }
+    
+    // Get or create editore_id and collana_id
+    // These will be automatically handled by addBook/updateBook in DbManager
 
     book->isDigital = ui.isDigitalCheck->isChecked();
 
@@ -111,9 +146,30 @@ void BookEditor::addCollana()
     QString newCollana = QInputDialog::getText(this, tr("New Collana"), tr("Collana name:"));
     if ( !newCollana.isEmpty() )
     {
+        // Get current editore from combo
+        QString editore = ui.editorCombo->currentText();
+        
+        if (editore.isEmpty())
+        {
+            QMessageBox::warning(this, tr("Missing Editor"), 
+                tr("Please select or add an editor first before creating a collana."));
+            return;
+        }
+        
+        // Create the collana in database (will be done via DbManager)
+        // Format: "Collana (Editore)"
+        QString collanaWithEditor = QString("%1 (%2)").arg(newCollana, editore);
+        
+        // Refresh the list and add the new item
         populateCollana();
-        ui.collanaCombo->addItem( newCollana );
-        ui.collanaCombo->setCurrentText( newCollana );
+        
+        // Check if already exists after refresh
+        int idx = ui.collanaCombo->findText(collanaWithEditor);
+        if (idx < 0)
+        {
+            ui.collanaCombo->addItem(collanaWithEditor);
+        }
+        ui.collanaCombo->setCurrentText(collanaWithEditor);
     }
 }
 
@@ -122,9 +178,19 @@ void BookEditor::addEditor()
     QString newEditor = QInputDialog::getText(this, tr("New editor"), tr("Editor name:"));
     if ( !newEditor.isEmpty() )
     {
+        // The editor will be created in database via getOrCreateEditore
+        // when saving the book
+        
+        // Refresh the list
         populateEditors();
-        ui.editorCombo->addItem( newEditor );
-        ui.editorCombo->setCurrentText( newEditor );
+        
+        // Check if already exists after refresh
+        int idx = ui.editorCombo->findText(newEditor);
+        if (idx < 0)
+        {
+            ui.editorCombo->addItem(newEditor);
+        }
+        ui.editorCombo->setCurrentText(newEditor);
     }
 }
 

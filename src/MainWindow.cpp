@@ -8,6 +8,7 @@
 #include <QNetworkReply>
 #include <QComboBox>
 #include <QTimer>
+#include <QRegularExpression>
 
 #include "version.h"
 #include "MainWindow.h"
@@ -978,7 +979,18 @@ void MainWindow::doImportFromWeb( const QString & remote )
                             book.fromHTML( fileName );
 
                             //qWarning() << m_nomeCollana;
-                            book.collana = m_nomeCollana;
+                            // Parse collana format "Collana (Editore)"
+                            QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
+                            QRegularExpressionMatch match = rx.match(m_nomeCollana);
+                            if (match.hasMatched())
+                            {
+                                book.collana = match.captured(1).trimmed();
+                                book.editore = match.captured(2).trimmed();
+                            }
+                            else
+                            {
+                                book.collana = m_nomeCollana;
+                            }
 
                             BookEditor editor( m_library, this );
                             editor.setBook( &book );
@@ -1450,12 +1462,30 @@ void MainWindow::doImportFromWebZona42(const QString &remote)
                             book.title_orig = parts.at(0).trimmed();
 
                             book.author = parts.at(1).trimmed();
-                            book.collana = m_nomeCollana;
+                            
+                            // Parse collana format "Collana (Editore)"
+                            QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
+                            QRegularExpressionMatch match = rx.match(m_nomeCollana);
+                            if (match.hasMatched())
+                            {
+                                book.collana = match.captured(1).trimmed();
+                                book.editore = match.captured(2).trimmed();
+                            }
+                            else
+                            {
+                                book.collana = m_nomeCollana;
+                                book.editore = "Zona 42";
+                            }
+                            
                             book.isDigital = false;
                             book.owned = true;
                             book.read = true;
 
-                            book.editore = "Zona 42";
+                            // editore is already set above based on parsed collana
+                            if (book.editore.isEmpty())
+                            {
+                                book.editore = "Zona 42";
+                            }
                             int index = m_library->getBooksCount() + 1;
                             book.number = index;
 
