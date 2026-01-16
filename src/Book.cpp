@@ -496,6 +496,8 @@ bool Book::fromHTML(const QString &path)
                 //qWarning() << tables.size() << "tables found";
 
 
+
+
                 int idx = -1;
                 if (tables.size() == 3 )
                     idx = 1;
@@ -533,6 +535,14 @@ bool Book::fromHTML(const QString &path)
 
         } else {
             qWarning() << "HTML Tidy encountered an error:\n" << QString( (char*) errbuf.bp );
+        }
+
+        if ( title_ita.isEmpty() && title_orig.isEmpty() )
+        {
+
+            title_ita = QString("%1%2").arg( collana ).arg( number );
+            title_orig = title_ita;
+
         }
 
         // Clean up
