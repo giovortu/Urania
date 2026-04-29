@@ -73,12 +73,12 @@ public:
 
     QString isbn;
 
-    QString collana;
-    QString editore;
+    QString collanaName;
+    QString editoreName;
 
     // Normalized database fields
-    int editore_id;
-    int collana_id;
+    int editore;
+    int collana;
     QString cover_hash;
     QString synopsis_hash;
 

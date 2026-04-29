@@ -47,7 +47,7 @@ public slots:
 
     bool updateOwn( const QMap<int,bool> &owned );
 
-    void setCollana( const QString & collana );
+    void setCollana( const QString & collanaName );
 
     bool populateDatabase( const QString & path, const QString &basename="urania" );
 

@@ -122,14 +122,14 @@ Book::Book()
     owned = false;
     stars = 0;
     comment = "";
-    collana = "";
-    editore = "";
+    collanaName = "";
+    editoreName = "";
     reprint = false;
     read = false;
     
     // Initialize new fields
-    editore_id = -1;
-    collana_id = -1;
+    editore = -1;
+    collana = -1;
     cover_hash = "";
     synopsis_hash = "";
 }
@@ -154,8 +154,8 @@ bool Book::fromJson(const QJsonObject &obj)
     comment = obj["comment"].toString();
     reprint = obj["reprint"].toBool();
     read = obj["read"].toBool();
-    collana = obj["collana"].toString();
-    editore = obj["editore"].toString();
+    collanaName = obj["collanaName"].toString();
+    editoreName = obj["editoreName"].toString();
 
 
 
@@ -188,8 +188,8 @@ QJsonObject Book::toJson()
     obj["comment"] = comment;
     obj["reprint"] = reprint;
     obj["read"] = read;
-    obj["collana"] = collana;
-    obj["editore"] = editore;
+    obj["collanaName"] = collanaName;
+    obj["editoreName"] = editoreName;
 
 
     QJsonArray indexArray;
@@ -540,7 +540,7 @@ bool Book::fromHTML(const QString &path)
         if ( title_ita.isEmpty() && title_orig.isEmpty() )
         {
 
-            title_ita = QString("%1%2").arg( collana ).arg( number );
+            title_ita = QString("%1%2").arg( collanaName ).arg( number );
             title_orig = title_ita;
 
         }

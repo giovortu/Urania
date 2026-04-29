@@ -339,9 +339,9 @@ void MainWindow::initLibrary()
 
     m_collana->clear();
 
-    foreach( QString collana, collane )
+    foreach( QString collanaName, collane )
     {
-        m_collana->addItem( collana );
+        m_collana->addItem( collanaName );
     }
 
     m_collana->setCurrentText( m_nomeCollana );
@@ -405,10 +405,10 @@ void MainWindow::onBookInfo()
 
         QString data = book.date_pub.toString("yyyy");
 
-        QString editore = book.editore.replace(" ","%20");
+        QString editoreName = book.editoreName.replace(" ","%20");
 
 
-        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  editore + "+" + data );
+        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  editoreName + "+" + data );
 
     }
 
@@ -447,7 +447,7 @@ void MainWindow::viewBook(Book &book)
     ui->author->setText( book.author );
     ui->author->setToolTip( book.author );
 
-    ui->collana->setText( book.collana );
+    ui->collanaName->setText( book.collanaName );
 
     ui->title_ita->setText( book.title_ita );
     ui->title_ita->setToolTip( book.title_ita );
@@ -470,7 +470,7 @@ void MainWindow::viewBook(Book &book)
 
     m_starRating->setRating( book.stars / 10 );
 
-    ui->editore->setText( book.editore );
+    ui->editoreName->setText( book.editoreName );
 
 
     if ( !book.synopsis.isEmpty() )
@@ -627,7 +627,7 @@ void MainWindow::loadBookById(int id)
     int number = m_library->getBookById( id, m_currentBook );
     if ( number > 0 )
     {
-        m_nomeCollana = m_currentBook.collana;
+        m_nomeCollana = m_currentBook.collanaName;
         m_library->setCollana( m_nomeCollana );
         m_collana->setCurrentText( m_nomeCollana );
 
@@ -778,10 +778,10 @@ void MainWindow::writeSettings()
 
 void MainWindow::onCollanaChanged(const QString &txt)
 {
-    QString collana = m_collana->currentText();
-    if ( collana != m_nomeCollana )
+    QString collanaName = m_collana->currentText();
+    if ( collanaName != m_nomeCollana )
     {
-        m_nomeCollana = collana;
+        m_nomeCollana = collanaName;
         m_currentBookNumber = 1;
         updateView();
     }
@@ -979,17 +979,17 @@ void MainWindow::doImportFromWeb( const QString & remote )
                             book.fromHTML( fileName );
 
                             //qWarning() << m_nomeCollana;
-                            // Parse collana format "Collana (Editore)"
+                            // Parse collanaName format "Collana (Editore)"
                             QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
                             QRegularExpressionMatch match = rx.match(m_nomeCollana);
                             if (match.hasMatch())
                             {
-                                book.collana = match.captured(1).trimmed();
-                                book.editore = match.captured(2).trimmed();
+                                book.collanaName = match.captured(1).trimmed();
+                                book.editoreName = match.captured(2).trimmed();
                             }
                             else
                             {
-                                book.collana = m_nomeCollana;
+                                book.collanaName = m_nomeCollana;
                             }
 
                             BookEditor editor( m_library, this );
@@ -1463,28 +1463,28 @@ void MainWindow::doImportFromWebZona42(const QString &remote)
 
                             book.author = parts.at(1).trimmed();
                             
-                            // Parse collana format "Collana (Editore)"
+                            // Parse collanaName format "Collana (Editore)"
                             QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
                             QRegularExpressionMatch match = rx.match(m_nomeCollana);
                             if (match.hasMatch())
                             {
-                                book.collana = match.captured(1).trimmed();
-                                book.editore = match.captured(2).trimmed();
+                                book.collanaName = match.captured(1).trimmed();
+                                book.editoreName = match.captured(2).trimmed();
                             }
                             else
                             {
-                                book.collana = m_nomeCollana;
-                                book.editore = "Zona 42";
+                                book.collanaName = m_nomeCollana;
+                                book.editoreName = "Zona 42";
                             }
                             
                             book.isDigital = false;
                             book.owned = true;
                             book.read = true;
 
-                            // editore is already set above based on parsed collana
-                            if (book.editore.isEmpty())
+                            // editoreName is already set above based on parsed collanaName
+                            if (book.editoreName.isEmpty())
                             {
-                                book.editore = "Zona 42";
+                                book.editoreName = "Zona 42";
                             }
                             int index = m_library->getBooksCount() + 1;
                             book.number = index;
@@ -1584,7 +1584,7 @@ void MainWindow::doImportFromWebZona42(const QString &remote)
                             {
                                 m_library->addBook( book );
                                 m_currentBook = book;
-                                m_nomeCollana = book.collana;
+                                m_nomeCollana = book.collanaName;
 
                                 updateView();
                                 viewBook(book);

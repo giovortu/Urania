@@ -76,10 +76,10 @@ bool DbManager::createTables()
     query.prepare("CREATE TABLE IF NOT EXISTS collane (\
       id INTEGER PRIMARY KEY AUTOINCREMENT,\
       nome TEXT NOT NULL,\
-      editore_id INTEGER NOT NULL,\
+      editore INTEGER NOT NULL,\
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\
-      FOREIGN KEY (editore_id) REFERENCES editori(id),\
-      UNIQUE(nome, editore_id)\
+      FOREIGN KEY (editore) REFERENCES editori(id),\
+      UNIQUE(nome, editore)\
     );");
 
     if(query.exec())
@@ -113,10 +113,10 @@ bool DbManager::createTables()
     digital	BOOL,\
     cover_hash TEXT,\
     synopsis_hash TEXT,\
-    editore_id INTEGER,\
-    collana_id INTEGER,\
-    FOREIGN KEY(editore_id) REFERENCES editori(id),\
-    FOREIGN KEY(collana_id) REFERENCES collane(id),\
+    editore INTEGER,\
+    collana INTEGER,\
+    FOREIGN KEY(editore) REFERENCES editori(id),\
+    FOREIGN KEY(collana) REFERENCES collane(id),\
     PRIMARY KEY(id)\
     );");
 
@@ -156,7 +156,7 @@ bool DbManager::updateOwn(const QMap<int, bool> &owned)
     bool success = false;
 
     QSqlQuery query;
-    query.prepare("UPDATE books SET owned = :owned WHERE collana_id = :collana_id AND number = :number");
+    query.prepare("UPDATE books SET owned = :owned WHERE collana = :collana AND number = :number");
 
     QMapIterator<int,bool> i(owned);
     while (i.hasNext())
@@ -164,7 +164,7 @@ bool DbManager::updateOwn(const QMap<int, bool> &owned)
         i.next();
         query.bindValue(":owned", i.value());
         query.bindValue(":number", i.key());
-        query.bindValue(":collana_id", m_collana_id);
+        query.bindValue(":collana", m_collana_id);
 
         if(query.exec())
         {
@@ -185,15 +185,15 @@ bool DbManager::addBook( Book &book)
 {
     bool success = false;
 
-    // Get or create editore_id and collana_id
-    if (!book.editore.isEmpty())
+    // Get or create editore and collana
+    if (!book.editoreName.isEmpty())
     {
-        book.editore_id = getOrCreateEditore(book.editore);
+        book.editore = getOrCreateEditore(book.editoreName);
     }
     
-    if (!book.collana.isEmpty() && book.editore_id > 0)
+    if (!book.collanaName.isEmpty() && book.editore > 0)
     {
-        book.collana_id = getOrCreateCollana(book.collana, book.editore_id);
+        book.collana = getOrCreateCollana(book.collanaName, book.editore);
     }
 
     // Calculate hashes
@@ -201,8 +201,8 @@ bool DbManager::addBook( Book &book)
     book.synopsis_hash = QCryptographicHash::hash(book.synopsis_image, QCryptographicHash::Md5).toHex();
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,digital,cover_hash,synopsis_hash,editore_id,collana_id) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:digital,:cover_hash,:synopsis_hash,:editore_id,:collana_id)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,digital,cover_hash,synopsis_hash,editore,collana) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:digital,:cover_hash,:synopsis_hash,:editore,:collana)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -220,8 +220,8 @@ bool DbManager::addBook( Book &book)
     query.bindValue(":digital", book.isDigital);
     query.bindValue(":cover_hash", book.cover_hash);
     query.bindValue(":synopsis_hash", book.synopsis_hash);
-    query.bindValue(":editore_id", book.editore_id > 0 ? book.editore_id : QVariant());
-    query.bindValue(":collana_id", book.collana_id > 0 ? book.collana_id : QVariant());
+    query.bindValue(":editore", book.editore > 0 ? book.editore : QVariant());
+    query.bindValue(":collana", book.collana > 0 ? book.collana : QVariant());
 
 
     if(query.exec())
@@ -407,15 +407,15 @@ bool DbManager::updateBook(Book *book)
 
     bool success = false;
 
-    // Get or create editore_id and collana_id
-    if (!book->editore.isEmpty())
+    // Get or create editore and collana
+    if (!book->editoreName.isEmpty())
     {
-        book->editore_id = getOrCreateEditore(book->editore);
+        book->editore = getOrCreateEditore(book->editoreName);
     }
     
-    if (!book->collana.isEmpty() && book->editore_id > 0)
+    if (!book->collanaName.isEmpty() && book->editore > 0)
     {
-        book->collana_id = getOrCreateCollana(book->collana, book->editore_id);
+        book->collana = getOrCreateCollana(book->collanaName, book->editore);
     }
 
     // Calculate hashes
@@ -438,13 +438,13 @@ bool DbManager::updateBook(Book *book)
             stars = :stars, \
             comment = :comment, \
             read = :read, \
-            collana = :collana, \
-            editore = :editore, \
+            collanaName = :collanaName, \
+            editoreName = :editoreName, \
             digital = :digital, \
             cover_hash = :cover_hash, \
             synopsis_hash = :synopsis_hash, \
-            editore_id = :editore_id, \
-            collana_id = :collana_id \
+            editore = :editore, \
+            collana = :collana \
         WHERE id = :id;");
 
     query.bindValue(":id", book->id);
@@ -461,13 +461,13 @@ bool DbManager::updateBook(Book *book)
     query.bindValue(":stars", book->stars);
     query.bindValue(":comment", book->comment);
     query.bindValue(":read", book->read);
-    query.bindValue(":collana", book->collana);
-    query.bindValue(":editore", book->editore);
+    query.bindValue(":collanaName", book->collanaName);
+    query.bindValue(":editoreName", book->editoreName);
     query.bindValue(":digital", book->isDigital);
     query.bindValue(":cover_hash", book->cover_hash);
     query.bindValue(":synopsis_hash", book->synopsis_hash);
-    query.bindValue(":editore_id", book->editore_id > 0 ? book->editore_id : QVariant());
-    query.bindValue(":collana_id", book->collana_id > 0 ? book->collana_id : QVariant());
+    query.bindValue(":editore", book->editore > 0 ? book->editore : QVariant());
+    query.bindValue(":collana", book->collana > 0 ? book->collana : QVariant());
 
     if(query.exec())
     {
@@ -559,8 +559,8 @@ bool DbManager::getBook(int number, Book &book, bool global)
     }
     else
     {
-        query.prepare( QString("SELECT id FROM books where collana_id = :collana_id ORDER BY number LIMIT 1 OFFSET %1-1 " ).arg( number ));
-        query.bindValue(":collana_id", m_collana_id);
+        query.prepare( QString("SELECT id FROM books where collana = :collana ORDER BY number LIMIT 1 OFFSET %1-1 " ).arg( number ));
+        query.bindValue(":collana", m_collana_id);
     }
 
     if(query.exec())
@@ -592,14 +592,14 @@ bool DbManager::exists(Book &book)
 
     int id = -1;
 
-    QString q = QString("SELECT id FROM books where LOWER(title_ita) LIKE :title_ita AND LOWER(author) LIKE :author AND collana_id = :collana_id;" );
+    QString q = QString("SELECT id FROM books where LOWER(title_ita) LIKE :title_ita AND LOWER(author) LIKE :author AND collana = :collana;" );
 
     QSqlQuery query;
 
     query.prepare( q );
     query.bindValue(":title_ita", book.title_ita.toLower());
     query.bindValue(":author", book.author.toLower());
-    query.bindValue(":collana_id", book.collana_id);
+    query.bindValue(":collana", book.collana);
 
     if(query.exec())
     {
@@ -623,11 +623,11 @@ int DbManager::getBookById(int id, Book &book)
     int retval = -1;
 
     QSqlQuery query;
-    query.prepare("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.id = :id");
+    query.prepare("SELECT b.*, c.nome as collanaName, e.nome as editoreName FROM books b LEFT JOIN collane c ON b.collana = c.id LEFT JOIN editori e ON b.editore = e.id WHERE b.id = :id");
 
     query.bindValue(":id", id);
 
-    QString collana = "";
+    QString collanaName = "";
 
     if(query.exec())
     {
@@ -635,10 +635,10 @@ int DbManager::getBookById(int id, Book &book)
         {
             book= bookFromQuery( query );
 
-            collana = book.collana;
+            collanaName = book.collanaName;
 
-            query.prepare(QString( "SELECT count(id) FROM books WHERE collana_id = :collana_id and id <= %1;").arg(id) );
-            query.bindValue(":collana_id", book.collana_id);
+            query.prepare(QString( "SELECT count(id) FROM books WHERE collana = :collana and id <= %1;").arg(id) );
+            query.bindValue(":collana", book.collana);
             if(query.exec())
             {
                 if (query.next())
@@ -696,8 +696,8 @@ int DbManager::getBooksCount(bool global )
     }
     else
     {
-        query.prepare("SELECT count(number) as num_books FROM books WHERE collana_id = (:collana_id)");
-        query.bindValue(":collana_id", m_collana_id);
+        query.prepare("SELECT count(number) as num_books FROM books WHERE collana = (:collana)");
+        query.bindValue(":collana", m_collana_id);
     }
     if(query.exec())
     {
@@ -721,8 +721,8 @@ int DbManager::getOwnedCount(bool global )
     }
     else
     {
-        query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true AND collana_id = (:collana_id)");
-        query.bindValue(":collana_id", m_collana_id);
+        query.prepare("SELECT count(number) as num_books FROM books WHERE owned = true AND collana = (:collana)");
+        query.bindValue(":collana", m_collana_id);
     }
     if(query.exec())
     {
@@ -744,8 +744,8 @@ int DbManager::getReadCount(bool global )
     }
     else
     {
-        query.prepare("SELECT count(number) as num_books FROM books WHERE read = true AND collana_id = (:collana_id)");
-        query.bindValue(":collana_id", m_collana_id);
+        query.prepare("SELECT count(number) as num_books FROM books WHERE read = true AND collana = (:collana)");
+        query.bindValue(":collana", m_collana_id);
     }
     if(query.exec())
     {
@@ -767,8 +767,8 @@ int DbManager::getDigitalCount(bool global )
     }
     else
     {
-        query.prepare("SELECT count(number) as num_books FROM books WHERE digital = true AND collana_id = (:collana_id)");
-        query.bindValue(":collana_id", m_collana_id);
+        query.prepare("SELECT count(number) as num_books FROM books WHERE digital = true AND collana = (:collana)");
+        query.bindValue(":collana", m_collana_id);
     }
     if(query.exec())
     {
@@ -785,8 +785,8 @@ QList<Book> DbManager::getOwnedBooks()
 {
     QList<Book> books;
     QSqlQuery query;
-    query.prepare("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.owned = true AND b.collana_id = :collana_id");
-    query.bindValue(":collana_id", m_collana_id);
+    query.prepare("SELECT b.*, c.nome as collanaName, e.nome as editoreName FROM books b LEFT JOIN collane c ON b.collana = c.id LEFT JOIN editori e ON b.editore = e.id WHERE b.owned = true AND b.collana = :collana");
+    query.bindValue(":collana", m_collana_id);
     if(query.exec())
     {
         if(query.next())
@@ -807,8 +807,8 @@ QList<Book> DbManager::getReadBooks()
 {
     QList<Book> books;
     QSqlQuery query;
-    query.prepare("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.read = true AND b.collana_id = :collana_id");
-    query.bindValue(":collana_id", m_collana_id);
+    query.prepare("SELECT b.*, c.nome as collanaName, e.nome as editoreName FROM books b LEFT JOIN collane c ON b.collana = c.id LEFT JOIN editori e ON b.editore = e.id WHERE b.read = true AND b.collana = :collana");
+    query.bindValue(":collana", m_collana_id);
     if(query.exec())
     {
         while (query.next())
@@ -828,31 +828,31 @@ QStringList DbManager::getCollane()
     QStringList data;
     QSqlQuery query;
     query.prepare("SELECT c.nome, e.nome FROM collane c "
-                  "JOIN editori e ON c.editore_id = e.id "
+                  "JOIN editori e ON c.editore = e.id "
                   "ORDER BY e.nome, c.nome;");
 
     if(query.exec())
     {
         while (query.next())
         {
-            QString editore = query.value(1).toString();
-            QString collana = query.value(0).toString();
+            QString editoreName = query.value(1).toString();
+            QString collanaName = query.value(0).toString();
             // Format: "Collana (Editore)"
-            data << QString("%1 (%2)").arg(collana, editore);
+            data << QString("%1 (%2)").arg(collanaName, editoreName);
         }
     }
     else
     {
         qDebug() << "Error getting collane:" << query.lastError();
         // Fallback: get collane from books via JOIN
-        query.prepare("SELECT DISTINCT c.nome FROM books b INNER JOIN collane c ON b.collana_id = c.id WHERE b.collana_id IS NOT NULL ORDER BY c.nome;");
+        query.prepare("SELECT DISTINCT c.nome FROM books b INNER JOIN collane c ON b.collana = c.id WHERE b.collana IS NOT NULL ORDER BY c.nome;");
         if(query.exec())
         {
             while (query.next())
             {
-                QString collana = query.value(0).toString();
-                if (!collana.isEmpty())
-                    data << collana;
+                QString collanaName = query.value(0).toString();
+                if (!collanaName.isEmpty())
+                    data << collanaName;
             }
         }
     }
@@ -870,22 +870,22 @@ QStringList DbManager::getEditors()
     {
         while (query.next())
         {
-            QString editore = query.value(0).toString();
-            data << editore;
+            QString editoreName = query.value(0).toString();
+            data << editoreName;
         }
     }
     else
     {
         qDebug() << "Error getting editori:" << query.lastError();
         // Fallback: get editori from books via JOIN
-        query.prepare("SELECT DISTINCT e.nome FROM books b INNER JOIN editori e ON b.editore_id = e.id WHERE b.editore_id IS NOT NULL ORDER BY e.nome;");
+        query.prepare("SELECT DISTINCT e.nome FROM books b INNER JOIN editori e ON b.editore = e.id WHERE b.editore IS NOT NULL ORDER BY e.nome;");
         if(query.exec())
         {
             while (query.next())
             {
-                QString editore = query.value(0).toString();
-                if (!editore.isEmpty())
-                    data << editore;
+                QString editoreName = query.value(0).toString();
+                if (!editoreName.isEmpty())
+                    data << editoreName;
             }
         }
     }
@@ -898,19 +898,19 @@ QMap<QString, int> DbManager::getCollaneMap()
     QMap<QString, int> data;
     QSqlQuery query;
     query.prepare("SELECT c.id, c.nome, e.nome FROM collane c "
-                  "JOIN editori e ON c.editore_id = e.id "
+                  "JOIN editori e ON c.editore = e.id "
                   "ORDER BY e.nome, c.nome;");
 
     if(query.exec())
     {
         while (query.next())
         {
-            int collana_id = query.value(0).toInt();
-            QString collana = query.value(1).toString();
-            QString editore = query.value(2).toString();
-            // Format: "Collana (Editore)" -> collana_id
-            QString key = QString("%1 (%2)").arg(collana, editore);
-            data[key] = collana_id;
+            int collana = query.value(0).toInt();
+            QString collanaName = query.value(1).toString();
+            QString editoreName = query.value(2).toString();
+            // Format: "Collana (Editore)" -> collana
+            QString key = QString("%1 (%2)").arg(collanaName, editoreName);
+            data[key] = collana;
         }
     }
     else
@@ -931,9 +931,9 @@ QMap<QString, int> DbManager::getEditoriMap()
     {
         while (query.next())
         {
-            int editore_id = query.value(0).toInt();
-            QString editore = query.value(1).toString();
-            data[editore] = editore_id;
+            int editore = query.value(0).toInt();
+            QString editoreName = query.value(1).toString();
+            data[editoreName] = editore;
         }
     }
     else
@@ -951,7 +951,7 @@ int DbManager::getOrCreateEditore(const QString &nome)
 
     QSqlQuery query;
     
-    // Try to find existing editore
+    // Try to find existing editoreName
     query.prepare("SELECT id FROM editori WHERE nome = :nome");
     query.bindValue(":nome", nome);
     
@@ -960,7 +960,7 @@ int DbManager::getOrCreateEditore(const QString &nome)
         return query.value(0).toInt();
     }
     
-    // Create new editore
+    // Create new editoreName
     query.prepare("INSERT INTO editori (nome) VALUES (:nome)");
     query.bindValue(":nome", nome);
     
@@ -970,32 +970,32 @@ int DbManager::getOrCreateEditore(const QString &nome)
     }
     else
     {
-        qDebug() << "Error creating editore:" << query.lastError();
+        qDebug() << "Error creating editoreName:" << query.lastError();
         return -1;
     }
 }
 
-int DbManager::getOrCreateCollana(const QString &nome, int editore_id)
+int DbManager::getOrCreateCollana(const QString &nome, int editore)
 {
-    if (nome.isEmpty() || editore_id <= 0)
+    if (nome.isEmpty() || editore <= 0)
         return -1;
 
     QSqlQuery query;
     
-    // Try to find existing collana
-    query.prepare("SELECT id FROM collane WHERE nome = :nome AND editore_id = :editore_id");
+    // Try to find existing collanaName
+    query.prepare("SELECT id FROM collane WHERE nome = :nome AND editore = :editore");
     query.bindValue(":nome", nome);
-    query.bindValue(":editore_id", editore_id);
+    query.bindValue(":editore", editore);
     
     if (query.exec() && query.next())
     {
         return query.value(0).toInt();
     }
     
-    // Create new collana
-    query.prepare("INSERT INTO collane (nome, editore_id) VALUES (:nome, :editore_id)");
+    // Create new collanaName
+    query.prepare("INSERT INTO collane (nome, editore) VALUES (:nome, :editore)");
     query.bindValue(":nome", nome);
-    query.bindValue(":editore_id", editore_id);
+    query.bindValue(":editore", editore);
     
     if (query.exec())
     {
@@ -1003,54 +1003,54 @@ int DbManager::getOrCreateCollana(const QString &nome, int editore_id)
     }
     else
     {
-        qDebug() << "Error creating collana:" << query.lastError();
+        qDebug() << "Error creating collanaName:" << query.lastError();
         return -1;
     }
 }
 
 bool DbManager::migrateStringToRelational()
 {
-    // This function is no longer needed as collana and editore columns 
+    // This function is no longer needed as collanaName and editoreName columns
     // have been removed from the books table.
-    // All data must use editore_id and collana_id with JOIN to normalized tables.
+    // All data must use editore and collana with JOIN to normalized tables.
     qDebug() << "Migration function is obsolete - books table now uses only normalized IDs";
     return true;
 }
 
 
 
-void DbManager::setCollana(const QString &collana)
+void DbManager::setCollana(const QString &p_collanaName)
 {
-    m_collana = collana;
+    m_collana = p_collanaName;
     
-    // Extract collana name from format "Collana (Editore)" if needed
-    QString collanaName = collana;
+    // Extract collanaName name from format "Collana (Editore)" if needed
+    QString collanaName = p_collanaName;
     QString editoreName;
     
     QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
-    QRegularExpressionMatch match = rx.match(collana);
+    QRegularExpressionMatch match = rx.match(collanaName);
     if (match.hasMatch())
     {
         collanaName = match.captured(1).trimmed();
         editoreName = match.captured(2).trimmed();
     }
     
-    // Get collana_id from database
+    // Get collana from database
     QSqlQuery query;
     if (!editoreName.isEmpty())
     {
-        // Search with both collana and editore
+        // Search with both collanaName and editoreName
         query.prepare("SELECT c.id FROM collane c "
-                     "JOIN editori e ON c.editore_id = e.id "
-                     "WHERE c.nome = :collana AND e.nome = :editore");
-        query.bindValue(":collana", collanaName);
-        query.bindValue(":editore", editoreName);
+                     "JOIN editori e ON c.editore = e.id "
+                     "WHERE c.nome = :collanaName AND e.nome = :editoreName");
+        query.bindValue(":collanaName", collanaName);
+        query.bindValue(":editoreName", editoreName);
     }
     else
     {
-        // Search by collana name only (might return first match if multiple)
-        query.prepare("SELECT id FROM collane WHERE nome = :collana LIMIT 1");
-        query.bindValue(":collana", collanaName);
+        // Search by collanaName name only (might return first match if multiple)
+        query.prepare("SELECT id FROM collane WHERE nome = :collanaName LIMIT 1");
+        query.bindValue(":collanaName", collanaName);
     }
     
     if (query.exec() && query.next())
@@ -1060,7 +1060,7 @@ void DbManager::setCollana(const QString &collana)
     else
     {
         m_collana_id = -1;
-        qDebug() << "Could not find collana_id for:" << collana;
+        qDebug() << "Could not find collana for:" << collanaName;
     }
 }
 
@@ -1082,19 +1082,19 @@ Book DbManager::bookFromQuery( QSqlQuery &query )
     book.comment =           query.value( query.record().indexOf("comment") ).toString();
     book.reprint =           query.value( query.record().indexOf("reprint") ).toBool();
     book.read =              query.value( query.record().indexOf("read") ).toBool();
-    // collana and editore strings are populated from JOIN if available
-    int collana_idx = query.record().indexOf("collana");
-    int editore_idx = query.record().indexOf("editore");
-    book.collana = (collana_idx >= 0) ? query.value(collana_idx).toString() : QString();
-    book.editore = (editore_idx >= 0) ? query.value(editore_idx).toString() : QString();
+    // collanaName and editoreName strings are populated from JOIN if available
+    int collana_idx = query.record().indexOf("collanaName");
+    int editore_idx = query.record().indexOf("editoreName");
+    book.collanaName = (collana_idx >= 0) ? query.value(collana_idx).toString() : QString();
+    book.editoreName = (editore_idx >= 0) ? query.value(editore_idx).toString() : QString();
     book.id     =            query.value( query.record().indexOf("id") ).toInt();
     book.isDigital=          query.value( query.record().indexOf("digital") ).toBool();
     
     // Read new normalized fields
     book.cover_hash =        query.value( query.record().indexOf("cover_hash") ).toString();
     book.synopsis_hash =     query.value( query.record().indexOf("synopsis_hash") ).toString();
-    book.editore_id =        query.value( query.record().indexOf("editore_id") ).toInt();
-    book.collana_id =        query.value( query.record().indexOf("collana_id") ).toInt();
+    book.editore =        query.value( query.record().indexOf("editore") ).toInt();
+    book.collana =        query.value( query.record().indexOf("collana") ).toInt();
 
     return book;
 }
@@ -1118,17 +1118,17 @@ QString DbManager::searchBooks(const QString &text, const QString & field, QList
 
     if ( field == "indici" )
     {
-        stQuery =QString("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.id IN ( SELECT id FROM indexes WHERE title LIKE '%%1%'  )").arg( _text );
+        stQuery =QString("SELECT b.*, c.nome as collanaName, e.nome as editoreName FROM books b LEFT JOIN collane c ON b.collana = c.id LEFT JOIN editori e ON b.editore = e.id WHERE b.id IN ( SELECT id FROM indexes WHERE title LIKE '%%1%'  )").arg( _text );
 
     }
     else
     {
-        stQuery = QString("SELECT b.*, c.nome as collana, e.nome as editore FROM books b LEFT JOIN collane c ON b.collana_id = c.id LEFT JOIN editori e ON b.editore_id = e.id WHERE b.%1 LIKE '%%2%';").arg( field, _text );
+        stQuery = QString("SELECT b.*, c.nome as collanaName, e.nome as editoreName FROM books b LEFT JOIN collane c ON b.collana = c.id LEFT JOIN editori e ON b.editore = e.id WHERE b.%1 LIKE '%%2%';").arg( field, _text );
     }
 
     QSqlQuery query;
     query.prepare( stQuery );
-    //query.bindValue(":collana", m_collana);
+    //query.bindValue(":collanaName", m_collana);
 
     if(query.exec())
     {

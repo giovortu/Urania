@@ -106,9 +106,9 @@ bool Library::updateOwn(const QMap<int, bool> &owned)
      return m_books->updateOwn( owned );
 }
 
-void Library::setCollana(const QString &collana)
+void Library::setCollana(const QString &collanaName)
 {
-    m_books->setCollana( collana );
+    m_books->setCollana( collanaName );
 }
 
 bool Library::populateDatabase(const QString &path, const QString &basename)

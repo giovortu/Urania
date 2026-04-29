@@ -75,7 +75,7 @@ void SearchResultDialog::setResults(QList<Book> &books, const QString & title )
         table->setItem(row, col++, item);
 
         // Author
-        item = new QTableWidgetItem(book.collana);
+        item = new QTableWidgetItem(book.collanaName);
         item->setData(Qt::UserRole, book.id);
         item->setFlags(item->flags() & ~Qt::ItemIsEditable);
         table->setItem(row, col++, item);
