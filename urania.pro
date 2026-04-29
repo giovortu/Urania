@@ -13,13 +13,19 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 INCLUDEPATH += $$PWD/src $$PWD/libs/tidy/include
-
+win32 {
 #LIBS+=$$PWD/libs/tidy/tidy.dll
-#LIBS+=$$PWD/libs/tidy/tidy_static.lib
+LIBS+=$$PWD/libs/tidy/tidy_static.lib
+
+} else {
+
+include( $$PWD/src/tidy-html5/tidy-html5.pri )
+
+}
 
 
 include( $$PWD/src/settings/settings.pri )
-include( $$PWD/src/tidy-html5/tidy-html5.pri )
+
 
 
 SOURCES +=  $$PWD/main.cpp \
@@ -34,8 +40,11 @@ SOURCES +=  $$PWD/main.cpp \
             $$PWD/src/BookInfo.cpp \
             $$PWD/src/CopyableLabel.cpp \
             $$PWD/src/JsonFormWidget.cpp \
-            $$PWD/src/DatabaseUploader.cpp \
-            $$PWD/src/OwnCloudUploader.cpp
+            $$PWD/src/RemoteDatabaseManager.cpp \
+            $$PWD/src/OwnCloudManager.cpp \
+            $$PWD/src/AspectRatioPixmapLabel.cpp \
+            $$PWD/src/JsonEditor.cpp \
+            $$PWD/src/AboutBox.cpp
 
 HEADERS += \
             $$PWD/src/Library.h \
@@ -50,28 +59,33 @@ HEADERS += \
             $$PWD/src/CopyableLabel.h \
             $$PWD/src/JsonFormWidget.h \
             $$PWD/src/version.h \
-            $$PWD/src/DatabaseUploader.h \
-            $$PWD/src/OwnCloudUploader.h
+            $$PWD/src/RemoteDatabaseManager.h \
+            $$PWD/src/OwnCloudManager.h \
+            $$PWD/src/AspectRatioPixmapLabel.h \
+            $$PWD/src/JsonEditor.h \
+            $$PWD/src/AboutBox.h
 
 FORMS += \
             $$PWD/ui/MainWindow.ui \
             $$PWD/ui/SearchResultDialog.ui \
             $$PWD/ui/Statistics.ui \
             $$PWD/ui/BookEditor.ui \
-            $$PWD/ui/DatabaseUploader.ui
+            $$PWD/ui/RemoteDatabaseManager.ui \
+            $$PWD/ui/AboutBox.ui
 
 RESOURCES+= $$PWD/res/qdarkstyle/qdarkstyle.qrc \
             $$PWD/res/img/img.qrc
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
 
 win32 {
 
 RC_FILE = $$PWD/res/urania.rc
 
+QMAKE_POST_LINK +=  $$QTPATH/windeployqt.exe --dir $${DESTDIR} $${DESTDIR}/$${TARGET}.exe
+DEFINES+= GIT_CURRENT_SHA1='"\\\" $$system( git.exe rev-parse HEAD )\\\""'  BUILD_DATE='"\\\"$$system( date.exe /t )\\\""'
+
+
 }
-
-
+else {
+DEFINES+= GIT_CURRENT_SHA1='"\\\"$$system(cd $$PWD; git rev-parse HEAD)\\\""'  BUILD_DATE='"\\\"$$system( date -R )\\\""'
+}

@@ -11,8 +11,26 @@ Library::Library(const QString &database,QObject *parent)
 
     m_books->createTables();
 
-   // populateDatabase( "C:/Users/giovortu/Downloads/Urania/www.mondourania.com/urania/" );
+}
 
+void Library::reopen()
+{
+    m_books->reopen();
+}
+
+void Library::open(const QString &newDB)
+{
+    m_books->open( newDB );
+}
+
+void Library::close()
+{
+    m_books->close();
+}
+
+bool Library::exists(Book &book)
+{
+    return m_books->exists(book);
 }
 
 bool Library::getBook(int number, Book &book)
@@ -21,24 +39,54 @@ bool Library::getBook(int number, Book &book)
 
 }
 
-int Library::getBookCount()
+int Library::getBookById(int id, Book &book)
 {
-    return m_books->getBookCount();
+    return m_books->getBookById( id, book );
 }
 
-QString Library::searchBooks(const QString &text, int type, QList<Book> &books)
+int Library::getBooksCount(bool global )
+{
+    return m_books->getBooksCount( global );
+}
+
+QString Library::searchBooks(const QString &text, const QString & type, QList<Book> &books)
 {
     return m_books->searchBooks( text, type, books );
 }
 
-int Library::getOwnedCount()
+int Library::getOwnedCount(bool global )
 {
-    return m_books->getOwnedCount();
+    return m_books->getOwnedCount(global);
 }
 
-int Library::getReadCount()
+int Library::getReadCount(bool global )
 {
-    return m_books->getReadCount();
+    return m_books->getReadCount(global);
+}
+
+int Library::getDigitalCount(bool global )
+{
+    return m_books->getDigitalCount(global);
+}
+
+QStringList Library::getCollane()
+{
+    return m_books->getCollane();
+}
+
+QStringList Library::getEditors()
+{
+    return m_books->getEditors();
+}
+
+QMap<QString, int> Library::getCollaneMap()
+{
+    return m_books->getCollaneMap();
+}
+
+QMap<QString, int> Library::getEditoriMap()
+{
+    return m_books->getEditoriMap();
 }
 
 QList<Book> Library::getOwnedBooks()
@@ -51,6 +99,16 @@ QList<Book> Library::getReadBooks()
 {
     return m_books->getReadBooks();
 
+}
+
+bool Library::updateOwn(const QMap<int, bool> &owned)
+{
+     return m_books->updateOwn( owned );
+}
+
+void Library::setCollana(const QString &collanaName)
+{
+    m_books->setCollana( collanaName );
 }
 
 bool Library::populateDatabase(const QString &path, const QString &basename)
@@ -109,7 +167,7 @@ bool Library::populateDatabase(const QString &path, const QString &basename)
     return true;
 }
 
-bool Library::addBook(const Book &book)
+bool Library::addBook( Book &book)
 {
     return m_books->addBook( book );
 }
@@ -136,5 +194,15 @@ bool Library::updateBookStars(int number, int stars)
 {
     return m_books->updateBookStars( number, stars );
 
+}
+
+bool Library::updateBookIsDigital(int id, bool digital)
+{
+    return m_books->updateBookIsDigital( id, digital );
+}
+
+bool Library::updateBook(Book *book)
+{
+   return  m_books->updateBook( book );
 }
 

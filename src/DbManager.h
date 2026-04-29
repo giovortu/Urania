@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
+#include <QCryptographicHash>
 #include "Book.h"
 
 
@@ -14,27 +15,52 @@ class DbManager : public QObject
 public:
     explicit DbManager(const QString &path, QObject *parent = nullptr);
 
-    bool getBook(int number, Book &book);
-    int getBookCount();
+    bool exists( Book &book );
 
-    int getOwnedCount();
+    bool getBook(int number, Book &book, bool global = false);
+    int getBookById(int id, Book &book );
 
-    int getReadCount();
+    int getBooksCount( bool global = false );
+    int getOwnedCount( bool global = false);
+    int getReadCount( bool global = false);
+    int getDigitalCount(bool global = false);
 
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();
 
-    QString searchBooks(const QString &text, int type, QList<Book> &books);
+    QStringList getCollane();
+    QStringList getEditors();
+
+    // Normalized database methods - get ID mappings
+    QMap<QString, int> getCollaneMap();  // Returns "Collana (Editore)" -> collana
+    QMap<QString, int> getEditoriMap();  // Returns "Editore" -> editore
+    
+    int getOrCreateEditore(const QString &nome);
+    int getOrCreateCollana(const QString &nome, int editore);
+    bool migrateStringToRelational();
+
+    void reopen();
+    void open( const QString &newDB );
+    void close();
+
+
+    void setCollana( const QString & collanaName );
+
+    QString searchBooks(const QString &text,const QString & type, QList<Book> &books);
 
 public slots:
 
     bool createTables();
+    bool updateOwn( const QMap<int,bool> &owned );
 
-    bool addBook( const Book &book );
+    bool addBook(  Book &book );
     bool updateBookOwned( int number, bool owned );
     bool updateBookRead(int number, bool owned);
     bool updateBookComment( int number, const QString &comment );
     bool updateBookStars( int number, int stars );
+    bool updateBookIsDigital( int number, bool digital );
+
+    bool updateBook( Book *book );
 
     bool addIndex( int number, const Index &index );
 
@@ -53,6 +79,11 @@ private:
     QSqlDatabase m_db;
 
     int m_currentBookCount = -1;
+
+    QString m_collana;
+    int m_collana_id;
+
+    QString m_dbFile;
 
 };
 

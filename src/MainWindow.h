@@ -12,6 +12,11 @@ class QLineEdit;
 class QComboBox;
 class StarRating;
 class QSettings;
+class QLabel;
+class SearchResultDialog;
+class AspectRatioPixmapLabel;
+#include <QFile>
+#include <QTemporaryFile>
 
 
 QT_BEGIN_NAMESPACE
@@ -28,7 +33,24 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+
+    void ready();
+
+    void finished();
+
+    void downloadList( const QStringList & list );
+    void downloadListZona42( const QStringList & list );
+
 public slots:
+
+
+
+    void init();
+
+    void onSettings();
+
+    void importCSV();
 
     void viewBook( Book & book );
     void onNext(  );
@@ -50,11 +72,24 @@ public slots:
     void onReadChanged( bool );
 
     void onRatingChanged(qreal rating);
+    void onIsDigitalChanged( bool );
+
+    void onSaveComments();
 
     void onImportFromFile( );
     void onImportFromWeb( );
+    void onImportFromWebZona42();
+    void doImportFromWeb( const QString & remote );
+    void onImportAllFromWeb();
+
+    void onImportAllFromWebZona42();
+    void doImportFromWebZona42( const QString & remote );
+
+
 
     void loadBook( int index );
+
+    void loadBookById( int id );
 
     void onSearch();
 
@@ -63,22 +98,32 @@ public slots:
     void onNewBook();
 
     void onUpload();
+    void onDownload();
 
     void readSettings();
 
     void writeSettings();
 
-    void onDatabaseChanged( const QString &txt );
+    void onCollanaChanged( const QString &txt );
 
     void initLibrary();
 
+    void updateView();
+
     void onBookInfo();
+
+    void onEditBook();
+
+    bool parseHTML( const QString & filename );
+
+    void doDownloadList( const QStringList & list );
+    void doDownloadListZona42( const QStringList & list );
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 
 private:
-    int m_currentBook = 1;
+    int m_currentBookNumber = 1;
 
     QString m_currentDatabase;
 
@@ -88,7 +133,7 @@ private:
     QLineEdit *m_search;
 
     QComboBox *m_searchType;
-    QComboBox *m_database;
+    QComboBox *m_collana;
     Library *m_library;
 
     StarRating *m_starRating;
@@ -98,6 +143,16 @@ private:
     QSettings *m_settings;
 
     bool m_safeExit = false;
+
+    QString m_nomeCollana;
+
+    QLabel *m_totalBooks;
+
+    Book m_currentBook;
+
+    SearchResultDialog *m_searchDialog;
+
+    AspectRatioPixmapLabel *m_cover_img;
 };
 
 #endif // MAINWINDOW_H

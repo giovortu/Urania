@@ -15,202 +15,187 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QFrame" name="frame_2">
+    <item row="0" column="0" colspan="2">
+     <widget class="QFrame" name="frameSplitter">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>300</height>
+       </size>
+      </property>
       <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
+       <enum>QFrame::Shape::StyledPanel</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QLabel" name="cover_img">
-         <property name="minimumSize">
-          <size>
-           <width>458</width>
-           <height>669</height>
-          </size>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>458</width>
-           <height>669</height>
-          </size>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QFrame" name="frame">
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="3" column="1">
-        <widget class="QCheckBox" name="reprint">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Ristampa</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="QLabel" name="collana">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="CopyableLabel" name="cover_author">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="2">
-        <layout class="QGridLayout" name="gridLayout_4" rowstretch="0" columnstretch="0,0" rowminimumheight="0" columnminimumwidth="0,0">
-         <property name="leftMargin">
-          <number>5</number>
-         </property>
-         <property name="topMargin">
-          <number>5</number>
-         </property>
-         <property name="rightMargin">
-          <number>5</number>
-         </property>
-         <property name="bottomMargin">
-          <number>5</number>
-         </property>
-         <property name="spacing">
-          <number>5</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="synopsis_image">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="synopsis">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignJustify|Qt::AlignTop</set>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-           <property name="margin">
-            <number>5</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="1" column="0">
-        <widget class="CopyableLabel" name="date_pub">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QCheckBox" name="read">
-         <property name="text">
-          <string>Letto</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="CopyableLabel" name="author">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0" colspan="2">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Indice</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="CopyableLabel" name="title_ita">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QCheckBox" name="owned">
-         <property name="text">
-          <string>Nella collezione</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="CopyableLabel" name="title_orig">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="0" colspan="2">
-        <widget class="QScrollArea" name="scrollArea">
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_2">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>503</width>
-            <height>325</height>
-           </rect>
+         <widget class="QFrame" name="frameImg">
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <item>
-            <layout class="QGridLayout" name="indexLayout" rowstretch="0" columnstretch="0" rowminimumheight="0" columnminimumwidth="0">
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+         </widget>
+         <widget class="QFrame" name="frame">
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="11" column="1">
+            <layout class="QHBoxLayout" name="saveCommentsLayout">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+            </layout>
+           </item>
+           <item row="1" column="0">
+            <widget class="CopyableLabel" name="date_pub">
+             <property name="text">
+              <string>N/A</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QCheckBox" name="isDigital">
+             <property name="text">
+              <string>Digitale</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Editore</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="editoreName">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="1">
+            <widget class="QCheckBox" name="reprint">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Ristampa</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QCheckBox" name="read">
+             <property name="text">
+              <string>Letto</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_3">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Collana</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="collanaName">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <layout class="QGridLayout" name="gridLayout_4" rowstretch="0" columnstretch="0,0" rowminimumheight="0" columnminimumwidth="0,0">
              <property name="leftMargin">
               <number>5</number>
              </property>
@@ -226,56 +211,212 @@
              <property name="spacing">
               <number>5</number>
              </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="synopsis_image">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="synopsis">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignJustify|Qt::AlignmentFlag::AlignTop</set>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="margin">
+                <number>5</number>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
+           <item row="10" column="0" colspan="2">
+            <widget class="QTextEdit" name="comment">
+             <property name="minimumSize">
               <size>
-               <width>20</width>
-               <height>40</height>
+               <width>0</width>
+               <height>100</height>
               </size>
              </property>
-            </spacer>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="13" column="0" colspan="2">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Indice</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="CopyableLabel" name="number">
+             <property name="text">
+              <string>N/A</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="CopyableLabel" name="title_orig">
+             <property name="text">
+              <string>N/A</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QCheckBox" name="owned">
+             <property name="text">
+              <string>Nella collezione</string>
+             </property>
+            </widget>
+           </item>
+           <item row="9" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Commenti</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="CopyableLabel" name="author">
+             <property name="text">
+              <string>N/A</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="0" colspan="2">
+            <widget class="Line" name="line_2">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>5</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>5</height>
+              </size>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="14" column="0" colspan="2">
+            <widget class="QScrollArea" name="scrollArea">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetContents_2">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>736</width>
+                <height>251</height>
+               </rect>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout">
+               <item>
+                <layout class="QGridLayout" name="indexLayout" rowstretch="0" columnstretch="0" rowminimumheight="0" columnminimumwidth="0">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="spacing">
+                  <number>5</number>
+                 </property>
+                </layout>
+               </item>
+               <item>
+                <spacer name="verticalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="CopyableLabel" name="cover_author">
+             <property name="text">
+              <string>N/A</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="12" column="0" colspan="2">
+            <widget class="Line" name="line">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>5</height>
+              </size>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="CopyableLabel" name="title_ita">
+             <property name="text">
+              <string>N/A</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="CopyableLabel" name="number">
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0" colspan="2">
-        <widget class="QTextEdit" name="comment">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>100</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>100</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QLabel" name="editore">
-         <property name="text">
-          <string/>
-         </property>
         </widget>
        </item>
       </layout>
@@ -294,10 +435,20 @@
    </property>
    <widget class="QMenu" name="menuUrania">
     <property name="title">
-     <string>Urania</string>
+     <string>Book</string>
     </property>
+    <addaction name="separator"/>
+    <addaction name="actionNewBook"/>
+    <addaction name="separator"/>
+    <addaction name="actionFirstBook"/>
+    <addaction name="actionBackTenBooks"/>
     <addaction name="actionPrevious"/>
     <addaction name="actionNext"/>
+    <addaction name="actionForwardTenBooks"/>
+    <addaction name="actionLastBook"/>
+    <addaction name="separator"/>
+    <addaction name="actionUpload"/>
+    <addaction name="actionBookInfo"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -310,10 +461,19 @@
      <addaction name="actionImportFromFile"/>
      <addaction name="actionImport_from_web"/>
     </widget>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
     <addaction name="menuImport"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_About"/>
    </widget>
    <addaction name="menuUrania"/>
    <addaction name="menuTools"/>
+   <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -333,11 +493,19 @@
    <addaction name="actionForwardTenBooks"/>
    <addaction name="actionLastBook"/>
    <addaction name="separator"/>
+   <addaction name="actionEditBook"/>
+   <addaction name="separator"/>
    <addaction name="actionBookInfo"/>
    <addaction name="actionSearch"/>
    <addaction name="actionStatistics"/>
    <addaction name="actionNewBook"/>
    <addaction name="actionUpload"/>
+   <addaction name="actionDownload"/>
+   <addaction name="actionImporta_csv"/>
+   <addaction name="actionImport_from_web"/>
+   <addaction name="actionImport_all"/>
+   <addaction name="actionImportFrom_web42"/>
+   <addaction name="actionAll_Zona42"/>
   </widget>
   <action name="actionPrevious">
    <property name="icon">
@@ -460,6 +628,94 @@
    </property>
    <property name="text">
     <string>Upload</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/star-filled.svg</normaloff>:/images/star-filled.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionDownload">
+   <property name="icon">
+    <iconset resource="../res/qdarkstyle/qdarkstyle.qrc">
+     <normaloff>:/qss_icons/rc/arrow_down_focus.png</normaloff>:/qss_icons/rc/arrow_down_focus.png</iconset>
+   </property>
+   <property name="text">
+    <string>Download</string>
+   </property>
+   <property name="toolTip">
+    <string>Download Database</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionImporta_csv">
+   <property name="text">
+    <string>Importa csv</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionEditBook">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/book-edit.svg</normaloff>:/images/book-edit.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Edit</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actionImport_all">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/import-all.svg</normaloff>:/images/import-all.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Import all</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionAll_Zona42">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/import-all.svg</normaloff>:/images/import-all.svg</iconset>
+   </property>
+   <property name="text">
+    <string>All_Zona42</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionImportFrom_web42">
+   <property name="icon">
+    <iconset resource="../res/img/img.qrc">
+     <normaloff>:/images/import.svg</normaloff>:/images/import.svg</iconset>
+   </property>
+   <property name="text">
+    <string>importfrom_web42</string>
+   </property>
+   <property name="toolTip">
+    <string>importfrom_web42</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

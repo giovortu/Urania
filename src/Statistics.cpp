@@ -32,3 +32,30 @@ void Statistics::setReadBooks(int num)
     ui->numRead->setText( QString::number(num) );
 }
 
+void Statistics::setNumDigital( int num )
+{
+    ui->numDigital->setText( QString::number(num) );
+}
+
+void Statistics::setAllNumBooks(int num)
+{
+    ui->numBooks_2->setText( QString::number(num) );
+}
+
+
+void Statistics::setAllOwnedBooks(int num)
+{
+    ui->numOwned_2->setText( QString::number(num) );
+}
+
+void Statistics::setAllReadBooks(int num)
+{
+    ui->numRead_2->setText( QString::number(num) );
+}
+
+void Statistics::setAllNumDigital(int num)
+{
+    ui->numDigital_2->setText( QString::number(num) );
+
+}
+

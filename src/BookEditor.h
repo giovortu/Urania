@@ -5,6 +5,8 @@
 #include "ui_BookEditor.h"  // Generated UI header
 #include "Book.h"           // Include the Book class definition
 
+class Library;
+
 namespace Ui {
 class BookEditor;
 }
@@ -14,10 +16,13 @@ class BookEditor : public QDialog
     Q_OBJECT
 
 public:
-    BookEditor(QWidget* parent = nullptr);
+    BookEditor(Library *library, QWidget* parent = nullptr);
 
     // Set the Book object to edit
     void setBook(Book* book);
+
+signals:
+    void bookChanged( Book *book );
 
 private slots:
     // Handle user interaction and update the Book object
@@ -25,9 +30,16 @@ private slots:
 
     void loadCover();
 
+    void addCollana();
+    void addEditor();
+
+    void populateCollana();
+    void populateEditors();
+
 private:
     Ui::BookEditor ui;  // Generated UI object
-    Book* book;         // The Book object being edited
+    Book* book = nullptr;         // The Book object being edited
+    Library *m_library = nullptr;
 };
 
 

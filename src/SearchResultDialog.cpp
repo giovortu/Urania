@@ -5,33 +5,29 @@
 #include <QTableWidget>
 
 SearchResultDialog::SearchResultDialog(QWidget *parent) :
-    QWidget(parent),
+    QMainWindow(parent),
     ui(new Ui::SearchResultDialog)
 {
     ui->setupUi(this);
 
-    m_table = new QTableWidget( this );
-    ui->mainLayout->addWidget( m_table );
-    m_table->setColumnCount(8);
-    QStringList headers = {"Numero", "Titolo", "Tit. Orig.", "Autore", "Data", "Cover", "Poss.", "Letto"};
-    m_table->setHorizontalHeaderLabels(headers);
 
-    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
-
-
-    setAttribute(Qt::WA_DeleteOnClose);
+    //setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Window );//| Qt::WindowStaysOnTopHint);
+
+    ui->tabWidget->setTabsClosable( true );
+
+    connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &SearchResultDialog::closeTab );
 
     connect( ui->buttonBox, &QDialogButtonBox::rejected, this, &SearchResultDialog::close );
 
-    connect( m_table, &QTableWidget::cellDoubleClicked, this, &SearchResultDialog::rowDoubleClicked );
+    connect( ui->buttonBox, &QDialogButtonBox::clicked, this, [=](QAbstractButton * button){
 
-    for (int col = 0; col < m_table->columnCount()-1; ++col) {
-        m_table->horizontalHeader()->setSectionResizeMode(col, QHeaderView::ResizeToContents);
-    }
+        if (ui->buttonBox->buttonRole(button) == QDialogButtonBox::ButtonRole::ResetRole)
+        {
+            closeAllTabs();
+        }
+    });
 
-
-    m_table->horizontalHeader()->setSectionResizeMode(m_table->columnCount()-1, QHeaderView::Stretch);
 
 
 }
@@ -41,65 +37,162 @@ SearchResultDialog::~SearchResultDialog()
     delete ui;
 }
 
-void SearchResultDialog::setResults(QList<Book> &books)
+void SearchResultDialog::setResults(QList<Book> &books, const QString & title )
 {
-        m_table->setRowCount(books.size());
+    QTableWidget *table = openTab( title );
 
-        for (int row = 0; row < books.size(); ++row)
-        {
-            QTableWidgetItem *item;
-            const Book &book = books.at(row);
+    m_books = books;
 
-            // Number
-            item = new QTableWidgetItem(QString::number(book.number));
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 0, item);
+    table->setRowCount(books.size());
 
-            // Title (ITA)
-            item = new QTableWidgetItem(book.title_ita);
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 1, item);
+    for (int row = 0; row < books.size(); ++row)
+    {
+        int col = 0;
+        QTableWidgetItem *item;
+        const Book &book = books.at(row);
 
-            // Title (Original)
-            item = new QTableWidgetItem(book.title_orig);
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 2, item);
+        // Number
+        item = new QTableWidgetItem(QString::number(book.number));
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
+                // Title (ITA)
+        item = new QTableWidgetItem(book.title_ita);
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
 
-            // Author
-            item = new QTableWidgetItem(book.author);
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 3, item);
+        // Title (Original)
+        item = new QTableWidgetItem(book.title_orig);
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
 
-            // Date Published
-            item = new QTableWidgetItem(book.date_pub.toString("yyyy-MM-dd"));
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 4, item);
+        // Author
+        item = new QTableWidgetItem(book.author);
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
 
-            // Cover Author
-            item = new QTableWidgetItem(book.cover_author);
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 5, item);
+        // Author
+        item = new QTableWidgetItem(book.collanaName);
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
 
-            //Owned
-            item = new QTableWidgetItem(book.owned?"Yes":"No");
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 6, item);
+        // Date Published
+        item = new QTableWidgetItem(book.date_pub.toString("yyyy-MM-dd"));
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
 
-            //Read
-            item = new QTableWidgetItem(book.read?"Yes":"No");
-            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            m_table->setItem(row, 7, item);
+        // Digital
+        item = new QTableWidgetItem(book.isDigital?"Yes":"No");
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
+
+        //Owned
+        item = new QTableWidgetItem(book.owned?"Yes":"No");
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
+
+        //Read
+        item = new QTableWidgetItem(book.read?"Yes":"No");
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
+
+        item = new QTableWidgetItem("");
+        item->setData(Qt::UserRole, book.id);
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        table->setItem(row, col++, item);
 
 
 
-        }
+    }
 
 }
 
 void SearchResultDialog::rowDoubleClicked(int row, int column)
 {
-   int bookNumber = m_table->item(row, 0)->text().toInt();
-   emit showBook( bookNumber );
+    auto table = qobject_cast<QTableWidget *>( sender() );
+
+    if ( nullptr != table )
+    {
+       auto item = table->item(row, column);
+
+       int bookID = item->data(Qt::UserRole).toInt();
+
+       emit showBook( bookID );
+    }
+}
+
+void SearchResultDialog::closeTab(int index)
+{
+    ui->tabWidget->removeTab(index);
+}
+
+void SearchResultDialog::closeAllTabs()
+{
+    while (ui->tabWidget->count() > 0)
+    {
+        ui->tabWidget->removeTab(0);  // Always remove the first tab (index 0)
+    }
+}
+
+QTableWidget * SearchResultDialog::openTab( const QString &title )
+{
+
+    m_numTabs++;
+
+    auto table = new QTableWidget( this );
+
+    QStringList headers = {"Numero", "Titolo", "Tit. Orig.", "Autore","Collana",  "Data", "Digitale", "Posseduto", "Letto", ""};
+
+    table->setColumnCount(headers.size());
+
+    table->setHorizontalHeaderLabels(headers);
+
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+
+
+    connect( table, &QTableWidget::cellDoubleClicked, this, &SearchResultDialog::rowDoubleClicked );
+
+    for (int col = 0; col < table->columnCount()-1; ++col) {
+        table->horizontalHeader()->setSectionResizeMode(col, QHeaderView::ResizeToContents);
+    }
+
+
+    table->horizontalHeader()->setSectionResizeMode(table->columnCount()-1, QHeaderView::Stretch);
+
+    int id = -1;
+
+    if ( !title.isEmpty() )
+    {
+        id = ui->tabWidget->addTab( table, title );
+    }
+    else
+    {
+        id = ui->tabWidget->addTab( table, QString("Search %1").arg( m_numTabs) );
+    }
+
+    ui->tabWidget->setCurrentIndex( id );
+
+
+    return table;
+
+}
+
+void SearchResultDialog::closeEvent(QCloseEvent *event)
+{
+    this->hide();
+    event->ignore();
+
+
+
 }
 
 

@@ -15,9 +15,9 @@
 #define VERSION_H
 
 #define MAJOR 1
-#define MINOR 0
+#define MINOR 1
 #define REVISION 0
-#define BUILD "-rc"
+#define BUILD "-release"
 
 #define STRINGIFY(x) #x
 

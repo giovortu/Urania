@@ -14,13 +14,28 @@ class Library : public QObject
 public:
     explicit Library(const QString &database, QObject *parent = nullptr);
 
+    void reopen();
+    void open( const QString &newDB );
+    void close();
 
-    QString searchBooks( const QString &text, int type, QList<Book> &books );
+    bool exists(Book &book);
+
+
+    QString searchBooks( const QString &text, const QString & type, QList<Book> &books );
     bool getBook(int number, Book &book);
+    int getBookById(int id, Book &book);
 
-    int getBookCount();
-    int getOwnedCount();
-    int getReadCount();
+    int getBooksCount( bool global = false  );
+    int getOwnedCount(bool global = false  );
+    int getReadCount(bool global = false );
+    int getDigitalCount(bool global = false );
+
+    QStringList getCollane();
+    QStringList getEditors();
+    
+    // Get ID mappings for UI
+    QMap<QString, int> getCollaneMap();
+    QMap<QString, int> getEditoriMap();
 
     QList<Book> getOwnedBooks();
     QList<Book> getReadBooks();
@@ -30,13 +45,23 @@ signals:
 
 public slots:
 
+    bool updateOwn( const QMap<int,bool> &owned );
+
+    void setCollana( const QString & collanaName );
+
     bool populateDatabase( const QString & path, const QString &basename="urania" );
 
-    bool addBook( const Book &book );
+    bool addBook(  Book &book );
     bool updateBookOwned( int number, bool owned );
     bool updateBookRead(int number, bool read);
     bool updateBookComment( int number, const QString &comment );
     bool updateBookStars( int number, int stars );
+    bool updateBookIsDigital(int id, bool digital);
+
+    bool updateBook( Book *book );
+    
+    // Accessor for direct database operations
+    DbManager* getDbManager() { return m_books; }
 
 protected:
     DbManager *m_books;

@@ -8,7 +8,9 @@
 #include <QNetworkReply>
 #include <QComboBox>
 #include <QTimer>
+#include <QRegularExpression>
 
+#include "version.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "Library.h"
@@ -19,13 +21,86 @@
 #include "BookInfo.h"
 #include "JsonFormWidget.h"
 #include "BookEditor.h"
-#include "DatabaseUploader.h"
+#include "RemoteDatabaseManager.h"
+#include "JsonEditor.h"
+#include "AspectRatioPixmapLabel.h"
+#include "AboutBox.h"
 
+#include <QJsonDocument>
+#include <QDomDocument>
+
+#include "tidy.h"
+#include "tidybuffio.h"
+#include "tidyenum.h"
+#include "tidyplatform.h"
+#include <iostream>
+#include <fstream>
+#include <string>
 
 qreal roundToHalf(qreal value) {
     return qRound(value * 2.0) / 2.0;
 }
 
+bool downloadFile(const QString& url, const QString& savePath) {
+    QNetworkAccessManager manager;
+    QNetworkRequest request(url);
+
+    QNetworkReply* reply = manager.get(request);
+    QEventLoop loop;
+
+    // Connect finished signal
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+    // Connect error signal
+    QObject::connect(reply, &QNetworkReply::errorOccurred,reply,
+                    [&loop](QNetworkReply::NetworkError) {
+        loop.quit();
+    });
+
+    // Set 30 second timeout
+    QTimer::singleShot(30000, &loop, &QEventLoop::quit);
+
+    // Block until finished
+    loop.exec();
+
+    // Check for errors
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << "Error:" << reply->errorString();
+        reply->deleteLater();
+        return false;
+    }
+
+    // Check HTTP status code
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode != 200) {
+        qDebug() << "HTTP Error:" << statusCode;
+        reply->deleteLater();
+        return false;
+    }
+
+    // Get data
+    QByteArray data = reply->readAll();
+
+    // Ensure directory exists
+    QFileInfo fileInfo(savePath);
+    QDir().mkpath(fileInfo.absolutePath());
+
+    // Save to file
+    QFile file(savePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << "Cannot open file for writing:" << savePath;
+        reply->deleteLater();
+        return false;
+    }
+
+    file.write(data);
+    file.close();
+
+    qDebug() << "Downloaded" << data.size() << "bytes to" << savePath;
+
+    reply->deleteLater();
+    return true;
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -40,28 +115,47 @@ MainWindow::MainWindow(QWidget *parent)
     m_settings = sett->settings();
 
 
-    m_database = new QComboBox( this );
-    m_database->addItem( "Urania" , "urania.db");
-    m_database->addItem( "Urania bis" , "uraniabis.db");
-    m_database->addItem( "Urania speciali" , "uraniaspeciali.db");
-    m_database->addItem( "Urania Jumbo" , "uraniajumbo.db");
 
-    m_database->addItem( "Urania rivista" , "uraniarivista.db");
-    m_database->addItem( "Urania argento", "uraniaargento.db" );
-    m_database->addItem( "Zona 42", "zona42.db" );
+}
 
-    connect( m_database,&QComboBox::currentTextChanged, this, &MainWindow::onDatabaseChanged );
+void MainWindow::init()
+{
 
 
+    m_collana = new QComboBox( this );
 
-    ui->toolBar->insertWidget(ui->actionFirstBook, m_database);
+
+    connect( m_collana,&QComboBox::currentTextChanged, this, &MainWindow::onCollanaChanged );
+
+
+    connect( ui->actionSettings, &QAction::triggered, this, &MainWindow::onSettings );
+
+    ui->toolBar->insertWidget(ui->actionFirstBook, m_collana);
 
     m_current = new QLineEdit( this );
-    m_current->setFixedWidth( 100 );
+    m_current->setFixedWidth( 50 );
     m_current->setText( "1" );
     m_current->setAlignment( Qt::AlignCenter );
 
+    QLabel *lbl = new QLabel( this );
+    lbl->setAlignment( Qt::AlignCenter );
+    lbl->setText( " / " );
+    lbl->setStyleSheet("background:transparent;margin-bottom:3px;");
+
+    m_totalBooks = new QLabel( this );
+    m_totalBooks->setAlignment( Qt::AlignCenter );
+    m_totalBooks->setStyleSheet("background:transparent;");
+    m_totalBooks->setFixedWidth( 50 );
+    m_totalBooks->setText( "0" );
+
     ui->toolBar->insertWidget(ui->actionNext, m_current);
+    ui->toolBar->insertWidget(ui->actionNext, lbl);
+    ui->toolBar->insertWidget(ui->actionNext, m_totalBooks);
+
+    m_cover_img = new AspectRatioPixmapLabel( this );
+    QVBoxLayout *_layout = new QVBoxLayout();
+    ui->frameImg->setLayout( _layout );
+    _layout->addWidget( m_cover_img , 0, Qt::AlignCenter );
 
     m_search = new QLineEdit( this );
     m_search->setFixedWidth( 100 );
@@ -69,11 +163,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->toolBar->insertWidget(ui->actionSearch, m_search);
 
     m_searchType = new QComboBox( this );
-    m_searchType->addItem( "Titolo" , 0);
-    m_searchType->addItem( "Titolo originale" , 1);
-    m_searchType->addItem( "Autore", 2 );
-    m_searchType->addItem( "Data pubblicazione", 3 );
-    m_searchType->addItem( "Autore cover", 4 );
+    m_searchType->addItem( "Numero" , "number");
+    m_searchType->addItem( "Digitale" , "digital");
+    m_searchType->addItem( "Titolo" , "title_ita");
+    m_searchType->addItem( "Titolo originale" , "title_orig");
+    m_searchType->addItem( "Autore", "author" );
+    m_searchType->addItem( "Data pubblicazione", "date_pub" );
+    m_searchType->addItem( "Autore cover", "cover_author" );
+    m_searchType->addItem( "Indici", "indici" );
+
+
+    m_searchType->setCurrentText("Titolo");
 
     ui->toolBar->insertWidget(ui->actionSearch, m_searchType);
 
@@ -92,13 +192,28 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( ui->actionBookInfo, &QAction::triggered, this, &MainWindow::onBookInfo );
 
+    connect( ui->actionEditBook, &QAction::triggered, this, &MainWindow::onEditBook );
+
     connect( ui->owned, &QCheckBox::clicked, this, &MainWindow::onOwnedChanged );
     connect( ui->read, &QCheckBox::clicked, this, &MainWindow::onReadChanged );
 
     m_starRating = new StarRating( this );
 
+
     connect( m_starRating, &StarRating::ratingChanged, this, &MainWindow::onRatingChanged );
 
+    connect( ui->isDigital, &QCheckBox::clicked, this, &MainWindow::onIsDigitalChanged );
+
+    auto saveComments = new QPushButton( this );
+    saveComments->setText(tr("Save Comments"));
+    ui->saveCommentsLayout->addWidget(saveComments, 0, Qt::AlignRight);
+
+    connect( saveComments, &QPushButton::clicked, this, &MainWindow::onSaveComments );
+
+    m_searchDialog = new SearchResultDialog();
+    m_searchDialog->setWindowTitle( "Search results"  );
+
+    m_searchDialog->hide();
 
     auto lay = qobject_cast<QGridLayout*>(ui->frame->layout());
 
@@ -120,27 +235,42 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( ui->actionImportFromFile, &QAction::triggered, this, &MainWindow::onImportFromFile );
     connect( ui->actionImport_from_web, &QAction::triggered, this, &MainWindow::onImportFromWeb );
+    connect( ui->actionImportFrom_web42, &QAction::triggered, this, &MainWindow::onImportFromWebZona42 );
+    connect( ui->actionImport_all, &QAction::triggered, this, &MainWindow::onImportAllFromWeb );
+    connect( ui->actionAll_Zona42, &QAction::triggered, this, &MainWindow::onImportAllFromWebZona42 );
+
+
 
     connect( ui->actionStatistics, &QAction::triggered, this, &MainWindow::onStatistics );
 
     connect( ui->actionNewBook, &QAction::triggered, this, &MainWindow::onNewBook );
 
     connect( ui->actionUpload, &QAction::triggered, this, &MainWindow::onUpload );
+    connect( ui->actionDownload, &QAction::triggered, this, &MainWindow::onDownload );
 
+    connect( ui->actionImporta_csv, &QAction::triggered, this, &MainWindow::importCSV );
+
+    connect( ui->action_About, &QAction::triggered, this, [=](){
+
+        auto *about = new AboutBox( nullptr );
+        about->setInfo( "Urania", "Books manager", VERSIONFULL, QDate::fromString( BUILD_DATE, "ddd MM/dd/yyyy").toString( "ddd dd/MM/yyyy") , GIT_CURRENT_SHA1);
+        about->exec();
+
+
+    } );
+
+    ui->actionImporta_csv->setVisible( false );
 
     readSettings();
 
     initLibrary();
 
-    int itemCount = m_database->count();
-    for (int i = 0; i < itemCount; ++i) {
-        QString itemDataValue = m_database->itemData(i).toString(); // Assuming the data is of type int
-        if (itemDataValue == m_currentDatabase) {
-            m_database->setCurrentIndex(i); // Set the current item based on matching data
-            break; // Exit the loop once a match is found
-        }
-    }
+    setWindowTitle( QString("Urania ") + VERSIONFULL );
 
+    connect( this, &MainWindow::downloadList, this, &MainWindow::doDownloadList );
+    connect( this, &MainWindow::downloadListZona42, this, &MainWindow::doDownloadListZona42 );
+
+    emit ready();
 
 
 }
@@ -150,6 +280,43 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::onSettings()
+{
+    QString json = QApplication::applicationDirPath() + "/settings/urania/config.json";
+
+    auto editor = new JsonEditor(json, this );
+    editor->exec();
+
+
+}
+
+void MainWindow::importCSV()
+{
+    QString name = QFileDialog::getOpenFileName(this, tr("Importa CSV"), "", tr("CSV Files (*.csv)"));
+    if ( !name.isEmpty() )
+    {
+        QFile file(name);
+        if ( file.open( QIODevice::ReadOnly ) )
+        {
+            QMap<int,bool> owned ;
+            QTextStream in(&file);
+            while ( !in.atEnd() )
+            {
+                QString line = in.readLine();
+                QStringList fields = line.split(",");
+                if ( fields.size() == 2 )
+                {
+                    int number = fields.at(0).toInt();
+                    bool own = fields.at(1).toInt();
+                    owned.insert(number, own);
+                }
+            }
+            file.close();
+            m_library->updateOwn( owned );
+        }
+    }
+}
+
 void MainWindow::initLibrary()
 {
     if ( nullptr != m_library )
@@ -157,19 +324,46 @@ void MainWindow::initLibrary()
         delete m_library;
     }
 
-    m_library = new Library( "database/" + m_currentDatabase );
-    if ( m_currentBook > m_library->getBookCount() )
+    m_library = new Library( "database/books.db");
+
+    QStringList collane = m_library->getCollane();
+
+    if ( m_nomeCollana == "" )
     {
-       m_currentBook = 1;
+        m_nomeCollana = collane.at(0);
     }
+
+    m_library->setCollana( m_nomeCollana );
+
+    m_collana->blockSignals(true);
+
+    m_collana->clear();
+
+    foreach( QString collanaName, collane )
+    {
+        m_collana->addItem( collanaName );
+    }
+
+    m_collana->setCurrentText( m_nomeCollana );
+
+    m_collana->blockSignals(false);
+
+    updateView();
+
+}
+
+void MainWindow::updateView()
+{
+    m_library->setCollana( m_nomeCollana );
+
+    m_totalBooks->setText( QString::number( m_library->getBooksCount() ) );
 
     Book book;
 
-    if ( m_library->getBook( m_currentBook, book ) )
+    if ( m_library->getBook( m_currentBookNumber, book ) )
     {
       viewBook( book );
     }
-
 }
 
 void MainWindow::onBookInfo()
@@ -198,7 +392,7 @@ void MainWindow::onBookInfo()
     QStringList search;
 
     Book book;
-    if ( m_library->getBook( m_currentBook, book ) )
+    if ( m_library->getBook( m_currentBookNumber, book ) )
     {
         QString title = book.title_ita.replace( QRegularExpression("[^a-zA-Z0-9]"), " " );
         title = title.replace( QRegularExpression("\\s+") , " ");
@@ -211,10 +405,10 @@ void MainWindow::onBookInfo()
 
         QString data = book.date_pub.toString("yyyy");
 
-        QString editore = book.editore.replace(" ","%20");
+        QString editoreName = book.editoreName.replace(" ","%20");
 
 
-        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  editore + "+" + data );
+        info->searchBookInfo( title+ "+"+ author + "+inpublisher:" +  editoreName + "+" + data );
 
     }
 
@@ -222,13 +416,38 @@ void MainWindow::onBookInfo()
 
 }
 
+void MainWindow::onEditBook()
+{
+    Book *book = new Book();
+    if ( m_library->getBook( m_currentBookNumber, *book ) )
+    {
+        auto edit = new BookEditor( m_library, this );
+        edit->setBook( book );
+        connect( edit, &BookEditor::bookChanged, this, [=]( Book * book ){
+
+            if ( m_library->updateBook( book ) )
+            {
+
+            }
+            else
+            {
+
+            }
+            viewBook( *book );
+
+        } );
+
+        edit->show();
+    }
+}
+
 void MainWindow::viewBook(Book &book)
 {
-    m_current->setText( QString::number( m_currentBook ) );
+    m_current->setText( QString::number( m_currentBookNumber ) );
     ui->author->setText( book.author );
     ui->author->setToolTip( book.author );
 
-    ui->collana->setText( book.collana );
+    ui->collanaName->setText( book.collanaName );
 
     ui->title_ita->setText( book.title_ita );
     ui->title_ita->setToolTip( book.title_ita );
@@ -251,7 +470,7 @@ void MainWindow::viewBook(Book &book)
 
     m_starRating->setRating( book.stars / 10 );
 
-    ui->editore->setText( book.editore );
+    ui->editoreName->setText( book.editoreName );
 
 
     if ( !book.synopsis.isEmpty() )
@@ -275,10 +494,14 @@ void MainWindow::viewBook(Book &book)
 
     QPixmap pix;
     pix.loadFromData( book.cover_image, "JPEG" );
-    ui->cover_img->setPixmap( pix );
+
+    qWarning() << QString(QCryptographicHash::hash(( book.cover_image ),QCryptographicHash::Md5).toHex());
+
+    m_cover_img->setPixmap( pix  );
 
     ui->owned->setChecked( book.owned );
     ui->read->setChecked( book.read );
+    ui->isDigital->setChecked( book.isDigital );
 
     while (QLayoutItem* item =  ui->indexLayout->takeAt(0)) {
           if (QWidget* widget = item->widget()) {
@@ -305,27 +528,25 @@ void MainWindow::viewBook(Book &book)
 
 void MainWindow::onNext()
 {
-    if (m_currentBook < m_library->getBookCount())
+    if (m_currentBookNumber < m_library->getBooksCount())
     {
-       Book book;
 
-       if (  m_library->getBook( ++m_currentBook, book ) )
+       if (  m_library->getBook( ++m_currentBookNumber, m_currentBook ) )
        {
-         viewBook( book );
-         m_current->setText( QString::number( m_currentBook ) );
+         viewBook( m_currentBook );
+         m_current->setText( QString::number( m_currentBookNumber ) );
        }
     }
 }
 
 void MainWindow::onPrevious()
 {
-    if (m_currentBook > 1)
+    if (m_currentBookNumber > 1)
     {
-       Book book;
-       if ( m_library->getBook( --m_currentBook, book ) )
+       if ( m_library->getBook( --m_currentBookNumber, m_currentBook ) )
        {
-           viewBook( book );
-           m_current->setText( QString::number( m_currentBook ) );
+           viewBook( m_currentBook );
+           m_current->setText( QString::number( m_currentBookNumber ) );
        }
     }
 }
@@ -346,17 +567,15 @@ void MainWindow::toggleRead()
 
 void MainWindow::onNextTen()
 {
-    int prev = m_currentBook + 10;
+    int prev = m_currentBookNumber + 10;
 
-    Book book;
-
-    if (  prev <= m_library->getBookCount() )
+    if (  prev <= m_library->getBooksCount() )
     {
         loadBook( prev );
     }
     else
     {
-        loadBook( m_library->getBookCount() );
+        loadBook( m_library->getBooksCount()  );
 
     }
 
@@ -364,13 +583,15 @@ void MainWindow::onNextTen()
 
 void MainWindow::onPreviuosTen()
 {
-    int prev = m_currentBook - 10;
-
-    Book book;
+    int prev = m_currentBookNumber - 10;
 
     if (  prev >=1 )
     {
         loadBook( prev );
+    }
+    else
+    {
+        loadBook( 1 );
     }
 }
 
@@ -381,50 +602,72 @@ void MainWindow::goFirst()
 
 void MainWindow::goLast()
 {
-    loadBook( m_library->getBookCount() );
+    loadBook( m_library->getBooksCount()  );
 
 }
 
 void MainWindow::loadBook(int value)
 {
-    if ( value > 0 && value != m_currentBook && value >=1 && value <=  m_library->getBookCount() )
+    if ( value > 0 && value != m_currentBookNumber && value >=1 && value <=  m_library->getBooksCount() )
     {
-        Book book;
-        m_currentBook = value;
-        if ( m_library->getBook( m_currentBook, book ) )
+
+        m_currentBookNumber = value;
+        if ( m_library->getBook( m_currentBookNumber, m_currentBook ) )
         {
-            m_current->setText( QString::number( m_currentBook) );
-            viewBook( book );
+            m_current->setText( QString::number( m_currentBookNumber) );
+            viewBook( m_currentBook );
         }
+    }
+}
+
+void MainWindow::loadBookById(int id)
+{
+
+
+    int number = m_library->getBookById( id, m_currentBook );
+    if ( number > 0 )
+    {
+        m_nomeCollana = m_currentBook.collanaName;
+        m_library->setCollana( m_nomeCollana );
+        m_collana->setCurrentText( m_nomeCollana );
+
+        m_currentBookNumber = number;
+
+        m_current->setText( QString::number( m_currentBookNumber) );
+        m_totalBooks->setText( QString::number( m_library->getBooksCount() ) );
+        viewBook( m_currentBook );
     }
 }
 
 void MainWindow::onSearch()
 {
     QList<Book> m_results;
-    int type = m_searchType->currentData().toInt();
+    QString type = m_searchType->currentData().toString();
 
     QString typeText = m_library->searchBooks( m_search->text(), type,  m_results );
 
     if ( m_results.size() > 0 )
-    {
-        auto dialog = new SearchResultDialog();
+    {        
 
-        dialog->setWindowTitle( QString("Search results for \"%1\" in \"%2\"").arg( m_search->text(), typeText ) );
+        m_searchDialog->setResults( m_results , QString("Search results for \"%1\" in \"%2\"").arg( m_search->text(), typeText ) );
 
-        dialog->setResults( m_results );
+        connect( m_searchDialog, &SearchResultDialog::showBook, this, &MainWindow::loadBookById );
 
-        connect( dialog, &SearchResultDialog::showBook, this, &MainWindow::loadBook );
-
-        dialog->show();
+        m_searchDialog->show();
     }
 }
 
 void MainWindow::onStatistics()
 {
-    int numBooks = m_library->getBookCount();
+    int numBooks = m_library->getBooksCount();
     int numOwned = m_library->getOwnedCount();
     int numRead = m_library->getReadCount();
+    int numDigital = m_library->getDigitalCount();
+
+    int numBooksG = m_library->getBooksCount(true);
+    int numOwnedG = m_library->getOwnedCount(true);
+    int numReadG = m_library->getReadCount(true);
+    int numDigitalG = m_library->getDigitalCount(true);
 
     Statistics dialog;
 
@@ -433,6 +676,12 @@ void MainWindow::onStatistics()
     dialog.setNumBooks( numBooks );
     dialog.setOwnedBooks( numOwned );
     dialog.setReadBooks( numRead );
+    dialog.setNumDigital( numDigital );
+
+    dialog.setAllNumBooks( numBooksG );
+    dialog.setAllOwnedBooks( numOwnedG );
+    dialog.setAllReadBooks( numReadG );
+    dialog.setAllNumDigital( numDigitalG );
 
     dialog.exec();
 
@@ -441,7 +690,7 @@ void MainWindow::onStatistics()
 
 void MainWindow::onNewBook()
 {
-    auto editor = new BookEditor( this );
+    auto editor = new BookEditor( m_library, this );
 
     Book book;
 
@@ -449,12 +698,15 @@ void MainWindow::onNewBook()
 
     if ( QDialog::Accepted == editor->exec() )
     {
-        int index = m_library->getBookCount();
+        int index = m_library->getBooksCount();
 
         book.number = index + 1;
         m_library->addBook( book );
-        m_currentBook = book.number;
-        viewBook( book );
+        m_currentBookNumber = book.id;
+        m_currentBook = book;
+        initLibrary();
+        viewBook( m_currentBook );
+
     }
 
 
@@ -462,7 +714,7 @@ void MainWindow::onNewBook()
 
 void MainWindow::onUpload()
 {
-    auto uploader = new DatabaseUploader( nullptr );
+    auto uploader = new RemoteDatabaseManager( nullptr );
     uploader->show();
 
     uploader->startUpload();
@@ -471,30 +723,67 @@ void MainWindow::onUpload()
 
 }
 
+void MainWindow::onDownload()
+{
+
+    auto uploader = new RemoteDatabaseManager( nullptr );
+    uploader->show();
+
+    m_library->close();
+
+    uploader->startDownload();
+
+    connect( uploader, &RemoteDatabaseManager::finished, this, &MainWindow::initLibrary );
+
+
+
+}
+
+
 void MainWindow::readSettings()
 {
     m_settings->beginGroup("settings");
-        m_currentBook = m_settings->value("current_book", 1 ).toInt();
-        m_currentDatabase = m_settings->value("current_database", "urania.db" ).toString();
+        m_currentBookNumber = m_settings->value("_current_book", 1 ).toInt();
+        m_nomeCollana = m_settings->value("_nome_collana", "Urania" ).toString();
+
+        m_settings->beginGroup("main");
+            restoreGeometry( QByteArray::fromBase64( m_settings->value("geometry").toByteArray()) );
+            restoreState( QByteArray::fromBase64(m_settings->value("state").toByteArray())) ;
+        m_settings->endGroup();
+
+        m_settings->beginGroup("search");
+            m_searchDialog->restoreGeometry( QByteArray::fromBase64( m_settings->value("geometry").toByteArray()) );
+        m_settings->endGroup();
+
     m_settings->endGroup();
 }
 
 void MainWindow::writeSettings()
 {
     m_settings->beginGroup("settings");
-        m_settings->setValue("current_book", m_currentBook );
-        m_settings->setValue("current_database", m_currentDatabase );
+        m_settings->setValue("_current_book", m_currentBookNumber );
+        m_settings->setValue("_nome_collana", m_nomeCollana );
+
+        m_settings->beginGroup("main");
+            m_settings->setValue( "geometry", saveGeometry().toBase64() );
+            m_settings->setValue( "State", saveState().toBase64() );
+        m_settings->endGroup();
+
+        m_settings->beginGroup("search");
+            m_settings->setValue( "geometry", m_searchDialog->saveGeometry().toBase64() );
+        m_settings->endGroup();
+
     m_settings->endGroup();
 }
 
-void MainWindow::onDatabaseChanged(const QString &txt)
+void MainWindow::onCollanaChanged(const QString &txt)
 {
-    QString db = m_database->currentData().toString();
-    if ( db != m_currentDatabase )
+    QString collanaName = m_collana->currentText();
+    if ( collanaName != m_nomeCollana )
     {
-        m_currentDatabase = db;
-        m_currentBook = 1;
-        initLibrary();
+        m_nomeCollana = collanaName;
+        m_currentBookNumber = 1;
+        updateView();
     }
 
 }
@@ -531,13 +820,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::onCurrentChanged()
 {
     int value = m_current->text().toInt();
-    if ( value >=1 && value <=  m_library->getBookCount() )
+    if ( value >=1 && value <=  m_library->getBooksCount() )
     {
-        Book book;
-        m_currentBook = value;
-        if ( m_library->getBook( m_currentBook, book ) )
+        m_currentBookNumber = value;
+        if ( m_library->getBook( m_currentBookNumber, m_currentBook ) )
         {
-            viewBook( book );
+            viewBook( m_currentBook );
         }
         else
         {
@@ -549,24 +837,40 @@ void MainWindow::onCurrentChanged()
 
 void MainWindow::onOwnedChanged(bool)
 {
-    m_library->updateBookOwned( m_currentBook, ui->owned->isChecked() );
+    m_library->updateBookOwned( m_currentBook.id, ui->owned->isChecked() );
 }
 
 void MainWindow::onReadChanged(bool)
 {
-    m_library->updateBookRead( m_currentBook, ui->read->isChecked() );
+    m_library->updateBookRead( m_currentBook.id, ui->read->isChecked() );
 }
 
 void MainWindow::onRatingChanged(qreal rating)
 {
-    m_library->updateBookStars( m_currentBook, (int)( roundToHalf( rating ) * 10 ));
+    m_library->updateBookStars( m_currentBook.id, (int)( roundToHalf( rating ) * 10 ));
 }
+
+void MainWindow::onIsDigitalChanged( bool )
+{
+    m_library->updateBookIsDigital( m_currentBook.id, ui->isDigital->isChecked() );
+}
+
+void MainWindow::onSaveComments()
+{
+    m_currentBook.comment = ui->comment->toPlainText();
+
+    m_library->updateBookComment( m_currentBook.id, ui->comment->toPlainText() );
+}
+
+
 
 void MainWindow::onImportFromFile()
 {
     QString file = QFileDialog::getOpenFileName( this, "Load from HTML", "", "HTML files (*.htm)" );
 
     qDebug() << file ;
+
+    parseHTML( file );
  }
 
 void MainWindow::onImportFromWeb()
@@ -574,12 +878,35 @@ void MainWindow::onImportFromWeb()
 
     QString remote = QInputDialog::getText( this, "Import from web", "Enter the URL of the web page to import from" );
 
+
+
+    doImportFromWeb( remote );
+
+}
+
+void MainWindow::onImportFromWebZona42()
+{
+
+    QString remote = QInputDialog::getText( this, "Import from web (Zona 42 )", "Enter the URL of the web page to import from" );
+
+
+
+    doImportFromWebZona42( remote );
+
+}
+
+void MainWindow::doImportFromWeb( const QString & remote )
+{
+
     QUrl url(remote);
 
     auto manager = new QNetworkAccessManager(this);
 
     // Send an HTTP GET request to the URL
-    manager->get(QNetworkRequest(url));
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+
 
     // Connect a slot to handle the reply when it is ready
     QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
@@ -589,7 +916,7 @@ void MainWindow::onImportFromWeb()
         {
             QByteArray htmlData = reply->readAll();
             QString html = QString::fromUtf8(htmlData);
-            qDebug() << "HTML content:" << html;
+            //qDebug() << "HTML content:" << html;
 
                QString fileName = QApplication::applicationDirPath() + "/temp.html";
                QFile file( fileName );
@@ -603,7 +930,15 @@ void MainWindow::onImportFromWeb()
                    Book book;
                    book.fromHTML( fileName );
 
-                   qWarning() << book.cover_image_path;
+                   qWarning() << "Check'" <<  book.title_ita << "'";
+                   if ( m_library->exists( book ) )
+                   {
+                       qWarning() << "Book '" <<  book.title_ita << "' already in library";
+                       emit finished();
+                       return;
+                   }
+
+                   qWarning() << "Past check" << book.title_ita;
 
                    QFileInfo info( book.cover_image_path );
                    QString cover = info.fileName();
@@ -616,11 +951,14 @@ void MainWindow::onImportFromWeb()
 
                    QUrl imgUrl( img );
 
-                   qWarning() << img;
+                   //qWarning() << img;
 
                    auto manager = new QNetworkAccessManager(this);
 
-                   manager->get(QNetworkRequest(imgUrl));
+                   QNetworkRequest request(imgUrl);
+                   request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+
 
                    // Connect a slot to handle the reply when it is ready
                    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
@@ -635,13 +973,42 @@ void MainWindow::onImportFromWeb()
                            f.write( imgData );
                            f.close();
 
-                            qWarning() << "Saved";
+
 
                             Book book;
                             book.fromHTML( fileName );
 
-                            m_library->addBook( book );
+                            //qWarning() << m_nomeCollana;
+                            // Parse collanaName format "Collana (Editore)"
+                            QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
+                            QRegularExpressionMatch match = rx.match(m_nomeCollana);
+                            if (match.hasMatch())
+                            {
+                                book.collanaName = match.captured(1).trimmed();
+                                book.editoreName = match.captured(2).trimmed();
+                            }
+                            else
+                            {
+                                book.collanaName = m_nomeCollana;
+                            }
 
+                            BookEditor editor( m_library, this );
+                            editor.setBook( &book );
+
+                            if ( editor.exec() )
+                            {
+                                m_library->addBook( book );
+                                m_currentBook = book;
+
+                                updateView();
+                                viewBook(book);
+
+                                qWarning() << "Saved";
+
+
+                            }
+
+                            emit finished();
 
                        }
                        else
@@ -652,6 +1019,8 @@ void MainWindow::onImportFromWeb()
                        manager->deleteLater();
 
                    });
+
+                   manager->get( request );
                }
         }
         else
@@ -662,10 +1031,678 @@ void MainWindow::onImportFromWeb()
 
     });
 
+    manager->get( request );
+
+}
+
+void MainWindow::onImportAllFromWeb()
+{
+    QString remote = QInputDialog::getText( this, "Import from web", "Enter the URL of the web page to import from" );
+
+    QUrl url(remote);
+
+    auto manager = new QNetworkAccessManager(this);
+
+    // Send an HTTP GET request to the URL
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+
+    // Connect a slot to handle the reply when it is ready
+    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+    {
+
+        QStringList toDownload;
+
+
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            QByteArray htmlData = reply->readAll();
+
+            std::string htmlContent = QString::fromUtf8(htmlData).toStdString();
+
+            TidyDoc tdoc = tidyCreate();
+            TidyBuffer output = {0};
+            TidyBuffer errbuf = {0};
+            tidyBufInit(&output);
+            tidyBufInit(&errbuf);
+
+            // Configure Tidy for XHTML output
+
+            tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
+            tidyOptSetBool(tdoc, TidyShowWarnings, no);
+            tidyOptSetBool(tdoc, TidyDropEmptyElems, yes);
+            tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+
+            tidyOptSetBool(tdoc, TidyQuiet, yes);
+            tidyOptSetInt(tdoc, TidyWrapLen, 4096);
+
+            // Parse the HTML content
+            tidySetErrorBuffer(tdoc, &errbuf);
+            if (tidyParseString(tdoc, htmlContent.c_str()) >= 0)
+            {
+                tidyCleanAndRepair(tdoc);
+                tidyRunDiagnostics(tdoc);
+                tidySaveBuffer(tdoc, &output);
+
+
+                QString converted = QString( (char*)output.bp );
+
+                converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
+                converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+                converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
+                converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&nbsp;", "", Qt::CaseInsensitive);
+
+
+                converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "Copertina di" , "", Qt::CaseInsensitive );
+
+
+                QDomDocument doc;
+                QDomDocument::ParseResult result = doc.setContent( converted.toUtf8() );
+
+                qWarning() << result.errorMessage;
+
+                int pos = remote.lastIndexOf("/");
+                QString basPath= remote.left( pos );
+
+                if ( result )
+                {
+
+
+                    QDomNodeList links = doc.elementsByTagName("a");
+
+                    for ( int i =0; i < links.count(); i++ )
+                    {
+                        QDomElement link = links.at(i).toElement();
+
+                        if ( link.isNull() )
+                            continue;
+
+                        QDomNodeList imgList = link.elementsByTagName("img");
+
+                        if ( imgList.count() > 0 )
+                        {
+
+                            QDomElement imgElement = imgList.at(0).toElement();
+                            if (imgElement.isNull())
+                                continue;
+
+                            // Check if <img> has alt attribute
+                            if (imgElement.hasAttribute("alt"))
+                            {
+                                QString href = link.attribute("href");
+
+
+                                QString url = basPath + "/" + href;
+                                toDownload << url;
+
+
+                                qWarning() << "Found link: " << url;
+
+                               // doImportFromWeb( toDownload );
+                            }
+
+
+                        }
+
+
+                    }
+
+                }
+
+
+
+            }
+
+            tidyBufFree(&output);
+
+
+        }
+
+        emit downloadList(toDownload);
+
+    });
+
+    manager->get( request );
+
+
+
+}
+
+QString getInnerHtml(const QDomElement& element) {
+    if (element.isNull()) {
+        return QString();
+    }
+
+    QString html;
+    QTextStream stream(&html);
+
+    // Iterate through all child nodes
+    QDomNode child = element.firstChild();
+    while (!child.isNull()) {
+        // Save each child node to string
+        child.save(stream, 0);
+        child = child.nextSibling();
+    }
+
+    return html;
+}
+
+QString extractUnformattedText(const QDomNode& node) {
+    QString result;
+
+    // Traverse all child nodes recursively
+    QDomNode child = node.firstChild();
+    while (!child.isNull()) {
+        if (child.isText()) {
+            // Add text node content
+            result += child.nodeValue().trimmed() + " ";
+        } else if (child.isElement()) {
+            // Recursively process child elements
+            result += "<p>" + extractUnformattedText(child) + "</p>";
+        }
+        child = child.nextSibling();
+    }
+
+    return result.trimmed();
+}
+
+void MainWindow::onImportAllFromWebZona42()
+{
+
+QString remote = QInputDialog::getText( this, "Import from web (Zona 42)", "Enter the URL of the web page to import from" );
+
+    QUrl url(remote);
+
+    auto manager = new QNetworkAccessManager(this);
+
+    // Send an HTTP GET request to the URL
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+
+
+    // Connect a slot to handle the reply when it is ready
+    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+    {
+
+        QStringList toDownload;
+
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            QByteArray htmlData = reply->readAll();
+
+            std::string htmlContent = QString::fromUtf8(htmlData).toStdString();
+
+            TidyDoc tdoc = tidyCreate();
+            TidyBuffer output = {0};
+            TidyBuffer errbuf = {0};
+            tidyBufInit(&output);
+            tidyBufInit(&errbuf);
+
+            // Configure Tidy for XHTML output
+
+            tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
+            tidyOptSetBool(tdoc, TidyShowWarnings, no);
+            tidyOptSetBool(tdoc, TidyDropEmptyElems, yes);
+            tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+
+            tidyOptSetBool(tdoc, TidyQuiet, yes);
+            tidyOptSetInt(tdoc, TidyWrapLen, 4096);
+
+            // Parse the HTML content
+            tidySetErrorBuffer(tdoc, &errbuf);
+            if (tidyParseString(tdoc, htmlContent.c_str()) >= 0)
+            {
+                tidyCleanAndRepair(tdoc);
+                tidyRunDiagnostics(tdoc);
+                tidySaveBuffer(tdoc, &output);
+
+
+                QString converted = QString( (char*)output.bp );
+
+                converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
+                converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
+                //converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+                converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
+                converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&nbsp;", "", Qt::CaseInsensitive);
+
+
+                converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
+                //converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "Copertina di" , "", Qt::CaseInsensitive );
+
+
+                QDomDocument doc;
+                QDomDocument::ParseResult result = doc.setContent( converted.toUtf8() );
+
+                qWarning() << result.errorMessage;
+
+                int pos = remote.lastIndexOf("/");
+                QString basPath= remote.left( pos );
+
+
+                if ( result )
+                {
+
+
+                    // Find all div elements
+                    QDomNodeList divList = doc.elementsByTagName("div");
+
+                    // Regular expression to match IDs starting with "pgc-"
+                    QRegularExpression idPattern("^pgc-.*");
+
+                    for (int i = divList.count() - 1 ; i >= 0; i--)
+                    {
+                        QDomElement divElement = divList.at(i).toElement();
+                        if (divElement.isNull()) continue;
+
+                        // Check if div has ID attribute
+                        if (divElement.hasAttribute("id")) {
+                            QString divId = divElement.attribute("id");
+
+                            // Check if ID matches pattern
+                            if (idPattern.match(divId).hasMatch())
+                            {
+                                qWarning()  << "\n=== Found DIV with ID: " << divId.toStdString() << " ===" ;
+
+                                QDomNodeList anchorsList = divElement.elementsByTagName("a");
+                                if (!anchorsList.isEmpty())
+                                {
+                                    QDomElement anchorElement = anchorsList.at(0).toElement();
+                                    if (!anchorElement.isNull())
+                                    {
+                                        // Extract common img attributes
+                                        QString href = anchorElement.attribute("href");
+
+
+                                        qWarning() << "Book Source: " << href.toStdString();
+
+                                        toDownload << href;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            emit downloadListZona42(toDownload);
+        }
+        manager->deleteLater();
+    });
+
+    manager->get( request );
+
+
+}
+
+void MainWindow::doImportFromWebZona42(const QString &remote)
+{
+    qWarning() << "Downloading " << remote;
+
+
+    QUrl url(remote);
+
+    auto manager = new QNetworkAccessManager(this);
+
+    // Send an HTTP GET request to the URL
+    QNetworkRequest request(url);
+    request.setRawHeader( "User-Agent" , "Mozilla Firefox" );
+
+    // Connect a slot to handle the reply when it is ready
+    QObject::connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply *reply)
+    {
+
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            QByteArray htmlData = reply->readAll();
+            std::string htmlContent = QString::fromUtf8(htmlData).toStdString();
+
+            TidyDoc tdoc = tidyCreate();
+            TidyBuffer output = {0};
+            TidyBuffer errbuf = {0};
+            tidyBufInit(&output);
+            tidyBufInit(&errbuf);
+
+            // Configure Tidy for XHTML output
+
+            tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
+            tidyOptSetBool(tdoc, TidyShowWarnings, no);
+            tidyOptSetBool(tdoc, TidyDropEmptyElems, yes);
+            tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+
+            tidyOptSetBool(tdoc, TidyQuiet, yes);
+            tidyOptSetInt(tdoc, TidyWrapLen, 4096);
+
+            // Parse the HTML content
+            tidySetErrorBuffer(tdoc, &errbuf);
+            if (tidyParseString(tdoc, htmlContent.c_str()) >= 0)
+            {
+                tidyCleanAndRepair(tdoc);
+                tidyRunDiagnostics(tdoc);
+                tidySaveBuffer(tdoc, &output);
+
+
+                QString converted = QString( (char*)output.bp );
+
+                converted = converted.replace( QRegularExpression("<head[^>]*>*</head>"), "");
+
+                converted = converted.replace( QRegularExpression("<p[^>]*>"), "" );
+                converted = converted.replace( QRegularExpression("<font[^>]*>"), "" );
+                //converted = converted.replace( QRegularExpression("<div[^>]*>"), "");
+                converted = converted.replace( QRegularExpression("<style[^>]*>[^<]*</style>"), "");
+                converted = converted.replace( "<i>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<strong>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "<b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&nbsp;", "", Qt::CaseInsensitive);
+                converted = converted.replace( "&raquo;", "", Qt::CaseInsensitive);
+
+
+                converted = converted.replace( "</b>", "", Qt::CaseInsensitive);
+                converted = converted.replace( "</strong>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</i>" , "", Qt::CaseInsensitive);
+
+                //converted = converted.replace( "</div>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</font>" , "", Qt::CaseInsensitive);
+                converted = converted.replace( "</p>" , "", Qt::CaseInsensitive);
+
+                converted = converted.replace( "Copertina di" , "", Qt::CaseInsensitive );
+
+
+            QDomDocument doc;
+            QDomDocument::ParseResult result = doc.setContent( converted.toUtf8() );
+
+            //qWarning() << result.errorMessage;
+
+            if ( result )
+            {
+               //qWarning() << htmlData;
+                 Book book;
+
+                QDomNodeList titles = doc.elementsByTagName("h1"); //title
+
+                if ( titles.count() > 0 )
+                {
+                    QDomElement h1Element = titles.at(0).toElement();
+                    if (!h1Element.isNull())
+                    {
+                       QString text = h1Element.text().trimmed();
+
+                       QStringList parts = text.split(", di ");
+
+                        if ( parts.count() == 2 )
+                        {
+                            book.title_ita = parts.at(0).trimmed();
+                            book.title_orig = parts.at(0).trimmed();
+
+                            book.author = parts.at(1).trimmed();
+                            
+                            // Parse collanaName format "Collana (Editore)"
+                            QRegularExpression rx("^(.+?)\\s*\\((.+?)\\)$");
+                            QRegularExpressionMatch match = rx.match(m_nomeCollana);
+                            if (match.hasMatch())
+                            {
+                                book.collanaName = match.captured(1).trimmed();
+                                book.editoreName = match.captured(2).trimmed();
+                            }
+                            else
+                            {
+                                book.collanaName = m_nomeCollana;
+                                book.editoreName = "Zona 42";
+                            }
+                            
+                            book.isDigital = false;
+                            book.owned = true;
+                            book.read = true;
+
+                            // editoreName is already set above based on parsed collanaName
+                            if (book.editoreName.isEmpty())
+                            {
+                                book.editoreName = "Zona 42";
+                            }
+                            int index = m_library->getBooksCount() + 1;
+                            book.number = index;
+
+                           qWarning() << "Check'" <<  book.title_ita << "'";
+                           if ( m_library->exists( book ) )
+                           {
+                               qWarning() << "Book '" <<  book.title_ita << "' already in library";
+                               emit finished();
+                               return;
+                           }
+
+
+                            QRegularExpression wpClassRegex("\\bwp-image-\\w+\\b");
+
+                            QDomNodeList imgList = doc.elementsByTagName("img");
+                            for (int i = 0; i < imgList.count(); ++i)
+                            {
+                                QDomElement imgElement = imgList.at(i).toElement();
+                                if (imgElement.isNull()) continue;
+
+
+
+
+                                // Check if img has class attribute
+                                if (imgElement.hasAttribute("class"))
+                                {
+                                    QString classAttr = imgElement.attribute("class");
+
+
+                                    // Check if "size-full" is in the class list
+                                    if (wpClassRegex.match(classAttr).hasMatch())
+                                    {
+                                        QString address = imgElement.attribute("src");
+
+                                        book.cover_image_path = address;
+
+                                        downloadFile( address, "test.jpg");
+
+                                        QFile img( "test.jpg" );
+
+
+                                        if ( img.open( QIODevice::ReadOnly) )
+                                        {
+                                            book.cover_image = img.readAll();
+                                            img.close();
+                                        }
+                                        else
+                                        {
+                                            qWarning() << "Image does not exist" << address;
+                                        }
+
+
+                                        qWarning() << book.title_ita << book.author << book.cover_image_path;
+
+
+                                        break;
+                                    }
+
+                                }
+
+                           }
+
+                           QDomNodeList divs = doc.elementsByTagName("div"); //title
+
+                           for (int i = 0; i < divs.count(); ++i)
+                           {
+                                QDomElement divElement = divs.at(i).toElement();
+                                if (divElement.isNull()) continue;
+
+                                // Check if div has ID attribute
+                                if (divElement.hasAttribute("data-index"))
+                                {
+
+
+                                    QString dataIndex = divElement.attribute("data-index").trimmed();
+
+                                    //if ( dataIndex == "3")
+                                    {
+
+                                        qWarning() << "DATA" << dataIndex;
+
+                                        QString text = getInnerHtml( divElement );
+
+                                        book.synopsis += text;
+
+
+                                    }
+
+                                }
+
+                            }
+                            BookEditor editor( m_library, this );
+                            editor.setBook( &book );
+
+                            if ( editor.exec() )
+                            {
+                                m_library->addBook( book );
+                                m_currentBook = book;
+                                m_nomeCollana = book.collanaName;
+
+                                updateView();
+                                viewBook(book);
+
+                                qWarning() << "Saved";
+
+                            }
+
+
+                       }
+                    }
+
+                 }
+
+
+            }
+            else
+            {
+                qWarning() << result.errorMessage;
+            }
+        }
+
+        emit finished();
+
+    }
+
+    manager->deleteLater();
+
+
+    });
+
+    manager->get( request );
 }
 
 
 
+
+bool MainWindow::parseHTML( const QString & fileName )
+{
+
+
+     Book book;
+     book.fromHTML( fileName );
+
+     BookEditor editor( m_library, this );
+     editor.setBook( &book );
+
+     if ( editor.exec() )
+     {
+         m_library->addBook( book );
+         m_currentBook = book;
+         viewBook( book );
+     }
+
+     return true;
+}
+
+void MainWindow::doDownloadList(const QStringList &list)
+{
+    qWarning() << list;
+
+
+    static int count = 0;
+
+    connect( this, &MainWindow::finished, this, [=](){
+
+        if ( count < list.size() )
+        {
+            QString url = list.at( count++ );
+
+            qWarning() << "\nImporting " << url;
+
+            doImportFromWeb( url );
+        }
+        else
+        {
+            qWarning() << "Finished all downloads";
+            count = 0;
+        }
+
+
+
+    });
+
+    emit finished();
+
+
+}
+
+void MainWindow::doDownloadListZona42(const QStringList &list)
+{
+
+    static int count = 0;
+
+    connect( this, &MainWindow::finished, this, [=](){
+
+        if ( count < list.size() )
+        {
+            QString url = list.at( count++ );
+
+            qWarning() << "\nImporting Zona42" << url;
+
+            doImportFromWebZona42( url );
+        }
+        else
+        {
+            qWarning() << "Finished all downloads";
+            count = 0;
+        }
+
+
+
+    });
+
+    emit finished();
+
+
+}
 
 
 

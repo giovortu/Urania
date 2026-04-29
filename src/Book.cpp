@@ -122,10 +122,16 @@ Book::Book()
     owned = false;
     stars = 0;
     comment = "";
-    collana = "";
-    editore = "";
+    collanaName = "";
+    editoreName = "";
     reprint = false;
     read = false;
+    
+    // Initialize new fields
+    editore = -1;
+    collana = -1;
+    cover_hash = "";
+    synopsis_hash = "";
 }
 
 bool Book::fromJson(const QJsonObject &obj)
@@ -137,6 +143,8 @@ bool Book::fromJson(const QJsonObject &obj)
     date_pub = QDate::fromString(obj["date_pub"].toString(), "yyyy-MM-dd");
     cover_author = obj["cover_author"].toString();
     cover_image = QByteArray::fromBase64( obj["cover_image"].toString().toLatin1() );
+
+
     synopsis = obj["synopsis"].toString();
     synopsis_image = QByteArray::fromBase64( obj["synopsis_image"].toString().toLatin1() );
 
@@ -146,8 +154,8 @@ bool Book::fromJson(const QJsonObject &obj)
     comment = obj["comment"].toString();
     reprint = obj["reprint"].toBool();
     read = obj["read"].toBool();
-    collana = obj["collana"].toString();
-    editore = obj["editore"].toString();
+    collanaName = obj["collanaName"].toString();
+    editoreName = obj["editoreName"].toString();
 
 
 
@@ -180,8 +188,8 @@ QJsonObject Book::toJson()
     obj["comment"] = comment;
     obj["reprint"] = reprint;
     obj["read"] = read;
-    obj["collana"] = collana;
-    obj["editore"] = editore;
+    obj["collanaName"] = collanaName;
+    obj["editoreName"] = editoreName;
 
 
     QJsonArray indexArray;
@@ -220,7 +228,6 @@ bool Book::isValid()
 
 bool Book::fromHTML(const QString &path)
 {
-
 
 
     QFileInfo fileInfo(path);
@@ -292,12 +299,13 @@ bool Book::fromHTML(const QString &path)
 
 
 
-#ifndef VERBOSE
+#ifdef VERBOSE
             qWarning().noquote() << "Converted XHTML:\n" << converted;
 #endif
 
             QDomDocument doc;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             QDomDocument::ParseResult res = doc.setContent( converted );
 
 
@@ -307,6 +315,17 @@ bool Book::fromHTML(const QString &path)
 
                 return false;
             }
+#else
+            bool res = doc.setContent( converted );
+
+
+            if (!res) {
+
+                qDebug() << "Failed to parse the HTML content.";
+
+                return false;
+            }
+#endif
 
             int currentTable = 0;
 
@@ -361,7 +380,7 @@ bool Book::fromHTML(const QString &path)
                         {
                             QString image_path = root + "/" + findImageSRC( cells.at(0) );
 
-                            qWarning() << "Cover:" << image_path;
+                            //qWarning() << "Cover:" << image_path;
 
                             QFile img( image_path );
 
@@ -375,15 +394,15 @@ bool Book::fromHTML(const QString &path)
                             else
                             {
 
-                                qWarning() << "Image does not exist" << image_path;
+                                //qWarning() << "Image does not exist" << image_path;
                             }
 
                             QString value = findTextValue( cells.at(1) );
                             number = value.toInt();
-                            qWarning() << "Number:" << value;
+                            //qWarning() << "Number:" << value;
 
                             title_ita = findTextValue( cells.at(2) );
-                            qWarning() << "Title:" << title_ita;
+                            //qWarning() << "Title:" << title_ita;
 
 
 
@@ -399,10 +418,10 @@ bool Book::fromHTML(const QString &path)
                                 date_pub = QDate::fromString( data, "M/yyyy" );
                             }
 
-                            qWarning() << "Pubblicato il:" << date_pub;
+                            //qWarning() << "Pubblicato il:" << date_pub;
 
                             title_orig = findTextValue( cells.at(1) );
-                            qWarning() << "Title orig:" << title_orig;
+                            //qWarning() << "Title orig:" << title_orig;
 
                         }
                         break;
@@ -414,15 +433,25 @@ bool Book::fromHTML(const QString &path)
                             {
                                 cover_author = "N/A";
                             }
-                            qWarning() << "Cover author:" << cover_author;
+                            //qWarning() << "Cover author:" << cover_author;
 
                             author = findTextValue( cells.at(1) );
-                            qWarning() << "Autore:" << author;
+                            //qWarning() << "Autore:" << author;
 
                         }
                         break;
 
-                        case 3: break;
+                        case 3:
+                        {
+                            QString text = findTextValue( cells.at(0) );
+                            if ( !text.isEmpty())
+                            {
+                                synopsis = text;
+                            }
+
+
+                        }
+                            break;
 
                         case 4:
                         {
@@ -431,7 +460,7 @@ bool Book::fromHTML(const QString &path)
                             {
                                 QString image_path = root + "/" + findImageSRC( cells.at(0) );
 
-                                qWarning() << "synopsis:" << image_path;
+                                //qWarning() << "synopsis:" << image_path;
 
                                 QFile img( image_path );
                                 if ( img.open( QIODevice::ReadOnly) )
@@ -441,13 +470,15 @@ bool Book::fromHTML(const QString &path)
                                 }
                                 else
                                 {
-                                    qWarning() << "synopsis Image does not exist" << image_path;
+                                   // qWarning() << "synopsis Image does not exist" << image_path;
                                 }
                             }
                             else
                             {
-                                synopsis = text;
-                                qWarning() << "Synopsis:" << synopsis;
+                                if( synopsis.isEmpty() )
+                                    synopsis = text;
+
+                                //qWarning() << "Synopsis:" << synopsis;
                             }
 
 
@@ -462,7 +493,9 @@ bool Book::fromHTML(const QString &path)
 
                 }
 
-                qWarning() << tables.size() << "tables found";
+                //qWarning() << tables.size() << "tables found";
+
+
 
 
                 int idx = -1;
@@ -504,6 +537,14 @@ bool Book::fromHTML(const QString &path)
             qWarning() << "HTML Tidy encountered an error:\n" << QString( (char*) errbuf.bp );
         }
 
+        if ( title_ita.isEmpty() && title_orig.isEmpty() )
+        {
+
+            title_ita = QString("%1%2").arg( collanaName ).arg( number );
+            title_orig = title_ita;
+
+        }
+
         // Clean up
         tidyBufFree(&output);
         tidyBufFree(&errbuf);
@@ -512,6 +553,8 @@ bool Book::fromHTML(const QString &path)
 
     return true;
 }
+
+
 
 auto operator<<(QDebug ds, const Book &book) -> QDebug
 {

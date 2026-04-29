@@ -46,15 +46,16 @@ public:
 
     bool fromHTML( const QString &path );
 
-    int number;
-    QString title_ita;
-    QString title_orig;
-    QString author;
+
+    int number =  -1;
+    QString title_ita = "";
+    QString title_orig = "";
+    QString author = "";
     QDate date_pub;
-    QString cover_author;
+    QString cover_author = "";
     QByteArray cover_image;
 
-    QString synopsis;
+    QString synopsis = "";
     QByteArray synopsis_image;
 
 
@@ -68,13 +69,23 @@ public:
     bool reprint;
     bool read;
 
+    bool isDigital;
+
     QString isbn;
 
-    QString collana;
-    QString editore;
+    QString collanaName;
+    QString editoreName;
+
+    // Normalized database fields
+    int editore;
+    int collana;
+    QString cover_hash;
+    QString synopsis_hash;
 
     //support
     QString cover_image_path;
+
+    int id;
 
 
 
