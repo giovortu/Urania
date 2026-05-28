@@ -186,14 +186,22 @@ bool DbManager::addBook( Book &book)
     bool success = false;
 
     // Get or create editore and collana
-    if (!book.editoreName.isEmpty())
+    if (!book.editoreName.isEmpty() && book.editore <= 0)
     {
         book.editore = getOrCreateEditore(book.editoreName);
     }
     
-    if (!book.collanaName.isEmpty() && book.editore > 0)
+    if (!book.collanaName.isEmpty() && book.editore > 0 && book.collana <= 0)
     {
         book.collana = getOrCreateCollana(book.collanaName, book.editore);
+    }
+
+    // Ensure editore is always consistent with collana
+    if (book.collana > 0)
+    {
+        int editoreFromCollana = getEditoreForCollana(book.collana);
+        if (editoreFromCollana > 0)
+            book.editore = editoreFromCollana;
     }
 
     // Calculate hashes
@@ -201,8 +209,8 @@ bool DbManager::addBook( Book &book)
     book.synopsis_hash = QCryptographicHash::hash(book.synopsis_image, QCryptographicHash::Md5).toHex();
 
     QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,read,digital,cover_hash,synopsis_hash,editore,collana) "
-                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:read,:digital,:cover_hash,:synopsis_hash,:editore,:collana)");
+    query.prepare("INSERT OR REPLACE INTO books (number,title_ita,title_orig,author,date_pub,cover_author,cover_image,synopsis,synopsis_image,owned,stars,comment,reprint,read,digital,cover_hash,synopsis_hash,editore,collana) "
+                  "VALUES    (:number,:title_ita,:title_orig,:author,:date_pub,:cover_author,:cover_image,:synopsis,:synopsis_image,:owned,:stars,:comment,:reprint,:read,:digital,:cover_hash,:synopsis_hash,:editore,:collana)");
 
     query.bindValue(":number", book.number);
     query.bindValue(":title_ita", book.title_ita);
@@ -216,6 +224,7 @@ bool DbManager::addBook( Book &book)
     query.bindValue(":owned", book.owned);
     query.bindValue(":stars", book.stars);
     query.bindValue(":comment", book.comment);
+    query.bindValue(":reprint", book.reprint);
     query.bindValue(":read", book.read);
     query.bindValue(":digital", book.isDigital);
     query.bindValue(":cover_hash", book.cover_hash);
@@ -247,6 +256,7 @@ bool DbManager::addBook( Book &book)
        if ( id == -1 )
            return false;
 
+       book.id = id;
 
        foreach( Index index, book.index )
        {
@@ -408,14 +418,22 @@ bool DbManager::updateBook(Book *book)
     bool success = false;
 
     // Get or create editore and collana
-    if (!book->editoreName.isEmpty())
+    if (!book->editoreName.isEmpty() && book->editore <= 0)
     {
         book->editore = getOrCreateEditore(book->editoreName);
     }
     
-    if (!book->collanaName.isEmpty() && book->editore > 0)
+    if (!book->collanaName.isEmpty() && book->editore > 0 && book->collana <= 0)
     {
         book->collana = getOrCreateCollana(book->collanaName, book->editore);
+    }
+
+    // Ensure editore is always consistent with collana
+    if (book->collana > 0)
+    {
+        int editoreFromCollana = getEditoreForCollana(book->collana);
+        if (editoreFromCollana > 0)
+            book->editore = editoreFromCollana;
     }
 
     // Calculate hashes
@@ -437,9 +455,8 @@ bool DbManager::updateBook(Book *book)
             owned = :owned, \
             stars = :stars, \
             comment = :comment, \
+            reprint = :reprint, \
             read = :read, \
-            collanaName = :collanaName, \
-            editoreName = :editoreName, \
             digital = :digital, \
             cover_hash = :cover_hash, \
             synopsis_hash = :synopsis_hash, \
@@ -460,9 +477,8 @@ bool DbManager::updateBook(Book *book)
     query.bindValue(":owned", book->owned);
     query.bindValue(":stars", book->stars);
     query.bindValue(":comment", book->comment);
+    query.bindValue(":reprint", book->reprint);
     query.bindValue(":read", book->read);
-    query.bindValue(":collanaName", book->collanaName);
-    query.bindValue(":editoreName", book->editoreName);
     query.bindValue(":digital", book->isDigital);
     query.bindValue(":cover_hash", book->cover_hash);
     query.bindValue(":synopsis_hash", book->synopsis_hash);
@@ -709,6 +725,28 @@ int DbManager::getBooksCount(bool global )
     }
 
     return m_currentBookCount;
+}
+
+int DbManager::getNextBookNumber(int collana_id)
+{
+    QSqlQuery query;
+    query.prepare("SELECT COALESCE(MAX(number), 0) + 1 FROM books WHERE collana = :collana");
+    query.bindValue(":collana", collana_id);
+    if (query.exec() && query.next())
+        return query.value(0).toInt();
+    return 1;
+}
+
+int DbManager::getEditoreForCollana(int collana_id)
+{
+    if (collana_id <= 0)
+        return -1;
+    QSqlQuery query;
+    query.prepare("SELECT editore FROM collane WHERE id = :collana");
+    query.bindValue(":collana", collana_id);
+    if (query.exec() && query.next())
+        return query.value(0).toInt();
+    return -1;
 }
 
 int DbManager::getOwnedCount(bool global )
@@ -1135,13 +1173,7 @@ QString DbManager::searchBooks(const QString &text, const QString & field, QList
         books.clear();
         while (query.next())
         {
-            int id = query.value( 0 ).toInt();
-
-            Book book;
-            if ( getBookById(id, book ) )
-            {
-                books.append( book );
-            }
+            books.append( bookFromQuery( query ) );
         }
     }
 

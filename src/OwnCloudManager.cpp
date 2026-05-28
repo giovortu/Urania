@@ -3,12 +3,22 @@
 #include <QDebug>
 #include <QDir>
 #include <QTimer>
+#include "SettingsManager.h"
 
 OwnCloudManager::OwnCloudManager(QObject *parent) : QObject(parent)
 {
-    username = "giovortu";
-    password = "3m1l71a_Rrx1140";
-    serverUrl = "http://192.168.0.227:9980/remote.php/dav/files/giovortu";
+
+    auto man = new SettingsManager( this );
+
+
+    QSettings *sett = man->settings();
+    sett->beginGroup("settings");
+        sett->beginGroup("owncloud");
+            username = sett->value( "user","giovortu" ).toString();
+            password = sett->value("password", "3m1l71a_Rrx1140" ).toString();
+            serverUrl = sett->value("server", "http://192.168.0.227:9980/remote.php/dav/files/giovortu" ).toString();
+        sett->endGroup();
+    sett->endGroup();
 
     networkManager = new QNetworkAccessManager(this);
 

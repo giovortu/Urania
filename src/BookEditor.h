@@ -33,6 +33,8 @@ private slots:
     void addCollana();
     void addEditor();
 
+    void onCollanaChanged(int index);
+
     void populateCollana();
     void populateEditors();
 

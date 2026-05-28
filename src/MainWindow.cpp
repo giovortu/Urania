@@ -698,13 +698,12 @@ void MainWindow::onNewBook()
 
     if ( QDialog::Accepted == editor->exec() )
     {
-        int index = m_library->getBooksCount();
-
-        book.number = index + 1;
+        book.number = m_library->getNextBookNumber( book.collana );
         m_library->addBook( book );
-        m_currentBookNumber = book.id;
+        m_nomeCollana = book.collanaName;
         m_currentBook = book;
         initLibrary();
+        m_currentBookNumber = book.number;
         viewBook( m_currentBook );
 
     }
@@ -747,12 +746,12 @@ void MainWindow::readSettings()
         m_nomeCollana = m_settings->value("_nome_collana", "Urania" ).toString();
 
         m_settings->beginGroup("main");
-            restoreGeometry( QByteArray::fromBase64( m_settings->value("geometry").toByteArray()) );
-            restoreState( QByteArray::fromBase64(m_settings->value("state").toByteArray())) ;
+            restoreGeometry( QByteArray::fromBase64( m_settings->value("_geometry").toByteArray()) );
+            restoreState( QByteArray::fromBase64(m_settings->value("_state").toByteArray())) ;
         m_settings->endGroup();
 
         m_settings->beginGroup("search");
-            m_searchDialog->restoreGeometry( QByteArray::fromBase64( m_settings->value("geometry").toByteArray()) );
+            m_searchDialog->restoreGeometry( QByteArray::fromBase64( m_settings->value("_geometry").toByteArray()) );
         m_settings->endGroup();
 
     m_settings->endGroup();
@@ -765,12 +764,12 @@ void MainWindow::writeSettings()
         m_settings->setValue("_nome_collana", m_nomeCollana );
 
         m_settings->beginGroup("main");
-            m_settings->setValue( "geometry", saveGeometry().toBase64() );
-            m_settings->setValue( "State", saveState().toBase64() );
+            m_settings->setValue( "_geometry", saveGeometry().toBase64() );
+            m_settings->setValue( "_state", saveState().toBase64() );
         m_settings->endGroup();
 
         m_settings->beginGroup("search");
-            m_settings->setValue( "geometry", m_searchDialog->saveGeometry().toBase64() );
+            m_settings->setValue( "_geometry", m_searchDialog->saveGeometry().toBase64() );
         m_settings->endGroup();
 
     m_settings->endGroup();
@@ -997,10 +996,13 @@ void MainWindow::doImportFromWeb( const QString & remote )
 
                             if ( editor.exec() )
                             {
+                                book.number = m_library->getNextBookNumber( book.collana );
                                 m_library->addBook( book );
                                 m_currentBook = book;
+                                m_nomeCollana = QString("%1 (%2)").arg(book.collanaName, book.editoreName);
 
-                                updateView();
+                                initLibrary();
+                                m_currentBookNumber = book.number;
                                 viewBook(book);
 
                                 qWarning() << "Saved";
@@ -1477,17 +1479,9 @@ void MainWindow::doImportFromWebZona42(const QString &remote)
                                 book.editoreName = "Zona 42";
                             }
                             
-                            book.isDigital = false;
+                                         book.isDigital = false;
                             book.owned = true;
                             book.read = true;
-
-                            // editoreName is already set above based on parsed collanaName
-                            if (book.editoreName.isEmpty())
-                            {
-                                book.editoreName = "Zona 42";
-                            }
-                            int index = m_library->getBooksCount() + 1;
-                            book.number = index;
 
                            qWarning() << "Check'" <<  book.title_ita << "'";
                            if ( m_library->exists( book ) )
@@ -1582,11 +1576,13 @@ void MainWindow::doImportFromWebZona42(const QString &remote)
 
                             if ( editor.exec() )
                             {
+                                book.number = m_library->getNextBookNumber( book.collana );
                                 m_library->addBook( book );
                                 m_currentBook = book;
-                                m_nomeCollana = book.collanaName;
+                                m_nomeCollana = QString("%1 (%2)").arg(book.collanaName, book.editoreName);
 
-                                updateView();
+                                initLibrary();
+                                m_currentBookNumber = book.number;
                                 viewBook(book);
 
                                 qWarning() << "Saved";
@@ -1634,8 +1630,12 @@ bool MainWindow::parseHTML( const QString & fileName )
 
      if ( editor.exec() )
      {
+         book.number = m_library->getNextBookNumber( book.collana );
          m_library->addBook( book );
          m_currentBook = book;
+         m_nomeCollana = QString("%1 (%2)").arg(book.collanaName, book.editoreName);
+         initLibrary();
+         m_currentBookNumber = book.number;
          viewBook( book );
      }
 

@@ -21,6 +21,7 @@ public:
     int getBookById(int id, Book &book );
 
     int getBooksCount( bool global = false );
+    int getNextBookNumber( int collana_id );
     int getOwnedCount( bool global = false);
     int getReadCount( bool global = false);
     int getDigitalCount(bool global = false);
@@ -37,6 +38,7 @@ public:
     
     int getOrCreateEditore(const QString &nome);
     int getOrCreateCollana(const QString &nome, int editore);
+    int getEditoreForCollana(int collana_id);
     bool migrateStringToRelational();
 
     void reopen();

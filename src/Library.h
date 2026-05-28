@@ -26,6 +26,8 @@ public:
     int getBookById(int id, Book &book);
 
     int getBooksCount( bool global = false  );
+    int getNextBookNumber( int collana_id );
+    int getEditoreForCollana( int collana_id );
     int getOwnedCount(bool global = false  );
     int getReadCount(bool global = false );
     int getDigitalCount(bool global = false );

@@ -24,6 +24,9 @@ BookEditor::BookEditor(Library *library, QWidget* parent) : QDialog(parent),m_li
     connect( ui.addCollanaButton, &QPushButton::clicked, this, &BookEditor::addCollana );
     connect( ui.addEditorButton, &QPushButton::clicked, this, &BookEditor::addEditor );
 
+    connect( ui.collanaCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+             this, &BookEditor::onCollanaChanged );
+
 
 
 
@@ -255,5 +258,25 @@ void BookEditor::populateEditors()
         i.next();
         // Display: "Editore", Data: editore
         ui.editorCombo->addItem(i.key(), i.value());
+    }
+}
+
+void BookEditor::onCollanaChanged(int /*index*/)
+{
+    int collana_id = ui.collanaCombo->currentData().toInt();
+    if (collana_id <= 0)
+        return;
+
+    int editore_id = m_library->getEditoreForCollana(collana_id);
+    if (editore_id <= 0)
+        return;
+
+    for (int i = 0; i < ui.editorCombo->count(); i++)
+    {
+        if (ui.editorCombo->itemData(i).toInt() == editore_id)
+        {
+            ui.editorCombo->setCurrentIndex(i);
+            break;
+        }
     }
 }

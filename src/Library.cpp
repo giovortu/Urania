@@ -49,6 +49,16 @@ int Library::getBooksCount(bool global )
     return m_books->getBooksCount( global );
 }
 
+int Library::getNextBookNumber(int collana_id)
+{
+    return m_books->getNextBookNumber(collana_id);
+}
+
+int Library::getEditoreForCollana(int collana_id)
+{
+    return m_books->getEditoreForCollana(collana_id);
+}
+
 QString Library::searchBooks(const QString &text, const QString & type, QList<Book> &books)
 {
     return m_books->searchBooks( text, type, books );

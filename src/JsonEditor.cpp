@@ -59,9 +59,13 @@ void JsonEditor::setupUI()
 void JsonEditor::createForm(QJsonValue value, const QString& keyPrefix)
 {
     qWarning() << keyPrefix << value;
-    if ( keyPrefix.startsWith("_") )
+    QStringList parts = keyPrefix.split('.');
+    foreach( QString p, parts )
     {
-        return;
+        if ( p.startsWith("_") )
+        {
+            return;
+        }
     }
 
     if (value.isObject()) {
