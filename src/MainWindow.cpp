@@ -124,6 +124,8 @@ void MainWindow::init()
 
     m_collana = new QComboBox( this );
 
+    m_collana->setFixedWidth(200);
+
 
     connect( m_collana,&QComboBox::currentTextChanged, this, &MainWindow::onCollanaChanged );
 
